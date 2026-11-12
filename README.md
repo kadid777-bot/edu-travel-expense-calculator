@@ -1,36 +1,93 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 스마트 교육여비 계산기
 
-## Getting Started
+교육생이 교육 장소·기간과 이동 정보를 입력하면 **규정 근거와 함께 항목별 여비(교통비·숙박비·일비·식비)를 바로 계산**해 주고, 궁금한 규정은 **AI에게 물어 근거 조항이 붙은 답**을 받을 수 있는 웹 서비스예요. 운영자는 명단을 한 번에 올려 최대 110명까지 일괄 계산할 수 있어요.
 
-First, run the development server:
+> 기준 규정: 한국자산관리공사 **여비세칙**·**인력개발세칙**(알리오에 공개된 문서)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## 이런 문제를 풀어요
+- 교육생은 길고 복잡한 여비 규정을 직접 읽고 손으로 계산해야 했어요.
+- 운영자는 교육생마다 같은 계산을 반복하고, 같은 문의에 매번 답해야 했어요.
+
+## 주요 기능
+
+### 여비 자동 계산
+- **교통비**: 실비를 지급하되, 같은 구간 열차요금(일반실, 편도, 같은 구간에서 요금이 다르면 가장 높은 요금)을 상한으로 해요. 열차·고속버스·항공·자차 모두 같은 상한을 써요(제주 구간 항공 제외).
+- **자차**: (구간 거리 × 오피넷 전국 평균 휘발유 가격 ÷ 연비 11.97km/L) + 하이패스 실비. 휘발유 가격은 기본이 조회일 가격이고, 시작일·종료일을 고르면 오피넷이 제공하는 날짜(최근 7일과 오늘)를 평균해요.
+- **숙박비**: 1박마다 상한(서울 100,000원, 그 밖 80,000원)을 적용해 합산해요.
+- **일비**: 교육대상자에게는 지급하지 않아 0원이에요.
+- **식비**: 기본은 0원이고, 식사가 제공되지 않은 날만 "식비 청구 일수 × 36,000원"으로 계산해요.
+- **시내 출장**은 여비를 지급하지 않아요(교육 장소와 같은 시·군).
+- 항목마다 **근거 조항**, 한도를 넘은 금액과 **그 이유**를 보여줘요. 외부 조회에 실패하면 금액을 지어내지 않고 인정을 보류하며 경고해요.
+- 교육 장소는 자주 쓰는 3곳(캠코양재타워·캠코인재개발원(아산)·부산 본사(BIFC))을 고르면 주소가 자동으로 채워지고, 그 밖의 장소는 "기타"로 직접 입력해요.
+
+### 조회 근거·증빙 화면
+- 철도 요금표(열차 종류별·역별), 네이버 지도 경로(구간 거리), 오피넷 전국 평균 휘발유 가격을 결과 화면에서 바로 보고, 캡처하거나 PNG로 저장해 증빙으로 낼 수 있어요.
+- 각 서비스의 API에서 조회한 값을 같은 정보로 그린 화면이에요(홈페이지 화면을 복사한 것이 아니에요).
+
+### 규정 AI 질의응답
+- 규정 문서에서 찾은 조항만 근거로 답하고, 근거 조항을 함께 보여줘요. 답은 5문장 이내예요.
+- 근거를 찾지 못하면 "규정에서 확인되지 않습니다. 운영자에게 문의해 주세요."라고 답해요.
+- 다른 사람의 개인정보·여비 금액을 묻는 질문에는 답하지 않아요.
+
+### 운영자 일괄 산출 (`/operator`)
+- 교육 장소·기간을 한 번 입력하고, 명단을 붙여넣거나 CSV 파일로 올리면 최대 110명을 25명씩 나눠 계산해요. 결과는 CSV(엑셀에서 열림)로 내려받아요.
+- 이름은 브라우저에서만 쓰고 서버로 보내지 않아요.
+
+그 밖에 증빙 사진 미리보기(서버에 올리지 않음), 자주 묻는 질문 모아보기가 있어요.
+
+## 기술 스택
+- **Next.js 16**(App Router) · React 19 · TypeScript · Tailwind CSS 4
+- 입력 검증 Zod, 테스트 Vitest
+- 외부 서비스: 국토교통부 열차정보(TAGO, 공공데이터포털) · 네이버 지도 Directions 5 · 한국석유공사 오피넷 · OpenAI API
+
+## 폴더 구조
+```
+app/            화면(/ , /operator)과 서버 API(/api/calculate, /api/ask, /api/explain, /api/calculate-batch)
+components/     입력 화면, 결과 카드, 조회 근거·증빙 화면, 규정 질문, 운영자 화면
+lib/calc/       계산 엔진(순수 함수, 네트워크 없음), 입력 검사, 시내 판정, 명단 변환
+lib/external/   외부 요금 조회(열차·거리·유가), 시간 제한과 실패 처리
+lib/ai/         규정 검색, 질문 검사, 답변 검증, 요청 횟수 제한
+lib/security/   입력 입구 검사, 결과 서명
+data/           규정 기준표, 시·군·구·철도역·좌표, 교육 장소, 규정 원문과 조항 조각
+tests/          단위·통합 테스트, 채점 사례 20건, 실서비스 점검(tests/live)
+docs/           검증 보고서(QA-REPORT, QA-BROWSER)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 실행하기
+```bash
+npm install
+cp .env.example .env     # 아래 환경 변수 값을 채우세요
+npm run dev              # http://localhost:3000
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 환경 변수 (`.env`, Git에 올라가지 않아요)
+| 이름 | 용도 |
+|---|---|
+| `OPENAI_API_KEY` | 규정 질의응답·쉬운 설명 (선택: `OPENAI_MODEL`, 기본 gpt-4.1-mini) |
+| `DATA_GO_KR_TRAIN_KEY` | 구간 열차요금 조회(공공데이터포털 TAGO) |
+| `NAVER_MAPS_DIRECTIONS_ID`, `NAVER_MAPS_DIRECTIONS_SECRET` | 구간 자동차 거리·경로 조회(네이버 지도) |
+| `OPINET_API_KEY` | 보통휘발유 전국 평균가 조회(오피넷) |
+| `RESULT_SIGNING_SECRET` | (선택) 계산 결과 서명 비밀값. 없으면 OpenAI 키에서 만들어 써요 |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+모든 키는 **서버 코드에서만** 쓰고, 브라우저로 내려가지 않아요(`NEXT_PUBLIC_` 키 없음).
 
-## Learn More
+## 테스트
+```bash
+npm test                 # 단위·통합 테스트 (외부 호출 없음)
+npm run test:live        # 실제 외부 서비스로 채점 20건·AI 질문 10개·키 노출 점검 (키 필요)
+npm run build            # 프로덕션 빌드
+```
 
-To learn more about Next.js, take a look at the following resources:
+## 기획·검증 문서
+- [PRD.md](PRD.md): 서비스 기획서 (문제, 목표, 기능, 범위, 보안)
+- [PLAN.md](PLAN.md): 계획서 (성공 기준, 작업 순서, 요구사항)
+- [DESIGN.md](DESIGN.md): 설계서 (구조, 데이터 모델, API, 화면)
+- [CHECK.md](CHECK.md): 점검 결과 (성공 기준 판정, 보안 점검, 남은 항목)
+- [docs/QA-REPORT.md](docs/QA-REPORT.md): 실서비스 검증 보고서
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 알아 둘 점
+- 열차요금은 국토교통부 열차정보 값이라 실제 승차권 요금과 다를 수 있어요.
+- 오피넷 오픈 API는 최근 7일과 오늘 가격만 제공해요. 그 밖의 날짜는 조회일 가격으로 계산하고 화면에 알려요.
+- 시·군·구 좌표와 대표 철도역은 근사값이고, 시·군·구 목록은 일부만 담았어요.
+- 로그인과 데이터베이스가 없고, 입력값을 서버에 저장하지 않아요.
+- 이 앱은 참고용 계산 도구이며 실제 여비 지급·결재와는 연동되지 않아요.
