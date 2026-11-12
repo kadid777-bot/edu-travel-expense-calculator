@@ -11,6 +11,9 @@
     "test:live": "vitest run --config vitest.live.config.mts"
   },
   "dependencies": {
+    "@upstash/redis": "^1.41.0",
+    "@vercel/blob": "^2.9.0",
+    "jszip": "^3.10.2",
     "next": "16.4.6",
     "react": "19.3.0",
     "react-dom": "19.3.0",

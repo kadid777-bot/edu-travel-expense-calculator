@@ -9,6 +9,7 @@ import { countDays } from "../lib/calc/days";
 import type { CalculationResult, CustomCourseInput, TransportMode } from "../lib/calc/types";
 import EvidenceUpload from "./EvidenceUpload";
 import ExplainPanel from "./ExplainPanel";
+import SubmitPanel from "./SubmitPanel";
 import ResultCard, { type ResultMeta } from "./ResultCard";
 
 interface LegForm {
@@ -206,6 +207,7 @@ export default function CalculatorForm() {
   const [message, setMessage] = useState("");
   const [result, setResult] = useState<CalculationResult | null>(null);
   const [meta, setMeta] = useState<ResultMeta | null>(null);
+  const [sentInput, setSentInput] = useState<unknown>(null); // 계산에 보낸 입력 (제출할 때 함께 보낸다)
 
   // 계산에 실패해 입력 오류가 생기면 맨 위의 오류 칸으로 화면을 옮기고 그 칸에 커서를 둔다 (긴 입력 화면에서 오류를 못 찾는 일을 줄인다)
   useEffect(() => {
@@ -269,6 +271,7 @@ export default function CalculatorForm() {
       }
       setResult(json.data);
       setMeta(json.meta);
+      setSentInput(payload);
     } catch {
       setResult(null);
       setMessage("서버에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요");
@@ -467,6 +470,7 @@ export default function CalculatorForm() {
         <div className="space-y-4">
           <ResultCard result={result} meta={meta} />
           <ExplainPanel key={meta.fetchedAt} result={result} signature={meta.signature ?? ""} />
+          <SubmitPanel key={`submit-${meta.fetchedAt}`} input={sentInput} result={result} meta={meta} />
         </div>
       )}
     </div>

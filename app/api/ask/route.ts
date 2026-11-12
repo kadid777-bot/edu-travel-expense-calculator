@@ -2,7 +2,8 @@
 // 보안: OpenAI 키는 서버에서만 쓰고, 질문 내용은 저장·로그하지 않는다.
 import { askRegulation } from "../../../lib/ai/ask";
 import { checkRequest } from "../../../lib/security/guard";
-import { allowDaily, allowRequest, clientKey } from "../../../lib/ai/rate-limit";
+import { clientKey } from "../../../lib/ai/rate-limit";
+import { allowShared, allowSharedDaily } from "../../../lib/security/limiter";
 
 function error(status: number, code: string, message: string) {
   return Response.json({ error: { code, message, details: {} } }, { status });
@@ -11,10 +12,10 @@ function error(status: number, code: string, message: string) {
 export async function POST(request: Request) {
   const blocked = checkRequest(request);
   if (blocked) return blocked;
-  if (!allowDaily("openai", 1500)) {
+  if (!(await allowSharedDaily("openai", 1500))) {
     return error(429, "RATE_LIMITED", "오늘 AI 질문 가능 횟수를 모두 사용했습니다. 내일 다시 시도해 주세요");
   }
-  if (!allowRequest(`ask:${clientKey(request)}`)) {
+  if (!(await allowShared(`ask:${clientKey(request)}`, 20, 600))) {
     return error(429, "RATE_LIMITED", "질문이 너무 많습니다. 잠시 후 다시 시도해 주세요");
   }
   let body: unknown;

@@ -32,6 +32,14 @@
 4. **Vercel에는 앱 키만 등록** — `OPENAI_API_KEY`, `OPINET_API_KEY`, `NAVER_MAPS_DIRECTIONS_ID/SECRET`, `DATA_GO_KR_TRAIN_KEY`. (선택) `RESULT_SIGNING_SECRET`. 계정 토큰 3개는 `C:\Users\dkim0\.my-app-secrets\account-tokens.env`로 옮겨 두었다.
 5. **`/operator` 접근 제한 결정** — 로그인이 없어서 주소를 아는 사람은 누구나 쓸 수 있다. 공개 배포 시 Vercel 비밀번호 보호나 로그인을 붙일지 정한다.
 
+## 2-1. 제출·취합 기능 (구현됨, 배포 전 확인할 것)
+
+- 운영자 비밀번호는 `C:Usersdkim0.my-app-secretsoperator.env`에 보관했다(Vercel 환경 변수에도 등록). 첫 로그인 뒤 원하는 값으로 바꾸려면 Vercel 환경 변수 `OPERATOR_PASSWORD`를 고치고 다시 배포한다.
+- 증빙(영수증)에는 이름·카드번호가 있을 수 있어 개인정보가 저장된다. 정산이 끝나면 운영자가 삭제해야 하고(30일 경과 경고 표시), 개인정보 동의 문구는 기관 기준이 있으면 `lib/submissions/types.ts`의 `CONSENT_TEXT`를 바꾼다.
+- 요청 제한은 Redis(KV)를 연결하지 않으면 서버 메모리 방식이라 완전하지 않다. 제출 저장소는 Blob만으로 동작한다.
+- Blob 무료 한도를 넘으면 유료일 수 있다(교육 1회 약 1GB 추정).
+- 제출 화면의 파일 올리기는 브라우저에서 Blob으로 바로 올리는 경로(운영)와 서버 경유 경로(로컬)를 둘 다 구현했다. 운영 경로는 실제 Blob에서 확인했고, 서버 경유 경로는 메모리 저장소에서 확인했다.
+
 ## 3. 알려진 한계 (고치지 않은 것)
 
 - 규정 질문에 **이름**(본인 이름 포함)을 써도 형태만으로는 막을 수 없어 OpenAI로 전달된다. 질문 칸에 "이름·연락처는 입력하지 마세요" 안내가 있다.

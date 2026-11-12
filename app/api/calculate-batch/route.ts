@@ -1,7 +1,8 @@
 // Design Ref: §4.2 POST /api/calculate-batch — 운영자 일괄 산출 (한 번에 최대 25명, 서버에는 아무것도 저장하지 않는다)
 // 이름은 받지 않는다: 행 번호(rowNo)만 받고 돌려준다.
 import { z } from "zod";
-import { allowDaily, allowRequest, clientKey } from "../../../lib/ai/rate-limit";
+import { clientKey } from "../../../lib/ai/rate-limit";
+import { allowShared, allowSharedDaily } from "../../../lib/security/limiter";
 import { calculateExpense } from "../../../lib/calc/calculate";
 import { CHUNK_SIZE } from "../../../lib/calc/batch";
 import { validateInput } from "../../../lib/calc/schema";
@@ -22,7 +23,7 @@ const bodySchema = z.object({
 export async function POST(request: Request) {
   const blocked = checkRequest(request);
   if (blocked) return blocked;
-  if (!allowRequest(`batch:${clientKey(request)}`, 12) || !allowDaily("batch", 400)) {
+  if (!(await allowShared(`batch:${clientKey(request)}`, 12, 600)) || !(await allowSharedDaily("batch", 400))) {
     return error(429, "RATE_LIMITED", "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요");
   }
 

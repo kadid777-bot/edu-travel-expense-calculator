@@ -3,7 +3,8 @@
 import { CUSTOM_COURSE_ID, resolveCourse } from "../../../lib/calc/course";
 import { calculateExpense } from "../../../lib/calc/calculate";
 import { validateInput } from "../../../lib/calc/schema";
-import { allowDaily, allowRequest, clientKey } from "../../../lib/ai/rate-limit";
+import { clientKey } from "../../../lib/ai/rate-limit";
+import { allowShared, allowSharedDaily } from "../../../lib/security/limiter";
 import { checkRequest, signResult } from "../../../lib/security/guard";
 import { getLookups } from "../../../lib/external/lookups";
 
@@ -14,7 +15,7 @@ function error(status: number, code: string, message: string, details: object = 
 export async function POST(request: Request) {
   const blocked = checkRequest(request);
   if (blocked) return blocked;
-  if (!allowRequest(`calculate:${clientKey(request)}`, 60) || !allowDaily("calculate", 5000)) {
+  if (!(await allowShared(`calculate:${clientKey(request)}`, 60, 600)) || !(await allowSharedDaily("calculate", 5000))) {
     return error(429, "RATE_LIMITED", "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요");
   }
   let body: unknown;

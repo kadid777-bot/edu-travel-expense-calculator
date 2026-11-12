@@ -7,9 +7,14 @@ function reject(status: number, code: string, message: string) {
 
 /** JSON 요청만 받고, 다른 사이트(cross-site)에서 온 요청은 거절한다. 통과하면 null */
 export function checkRequest(request: Request): Response | null {
+  return checkRequestAny(request, "application/json");
+}
+
+/** 내용 형식(예: multipart/form-data)을 지정해서 같은 검사를 한다 */
+export function checkRequestAny(request: Request, contentType: string): Response | null {
   const type = request.headers.get("content-type") ?? "";
-  if (!type.toLowerCase().includes("application/json")) {
-    return reject(415, "UNSUPPORTED_MEDIA_TYPE", "JSON 형식의 요청만 받을 수 있습니다");
+  if (!type.toLowerCase().includes(contentType)) {
+    return reject(415, "UNSUPPORTED_MEDIA_TYPE", "허용되지 않는 요청 형식입니다");
   }
   const site = request.headers.get("sec-fetch-site");
   if (site && site !== "same-origin" && site !== "none") {
