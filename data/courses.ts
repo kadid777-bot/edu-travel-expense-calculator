@@ -1,0 +1,81 @@
+// Design Ref: §3.1 Course — 실습용 교육 과정 고정 목록 (가상의 과정. 장소·날짜·제공 여부는 시험용)
+import type { Course } from "../lib/calc/types";
+
+export const COURSES: Course[] = [
+  {
+    id: "course-01",
+    name: "실습용 교육과정 A (서울 3일)",
+    venueName: "서울 교육장 (실습용)",
+    venueAddress: "서울특별시 강남구",
+    venueSido: "서울특별시",
+    venueSigungu: "강남구",
+    startDate: "2026-12-01",
+    endDate: "2026-12-03",
+    lodgingProvided: false,
+    mealsProvided: false,
+  },
+  {
+    id: "course-02",
+    name: "실습용 교육과정 B (부산 2일)",
+    venueName: "부산 교육장 (실습용)",
+    venueAddress: "부산광역시 남구",
+    venueSido: "부산광역시",
+    venueSigungu: "남구",
+    startDate: "2026-12-08",
+    endDate: "2026-12-09",
+    lodgingProvided: false,
+    mealsProvided: false,
+  },
+  {
+    id: "course-03",
+    name: "실습용 교육과정 C (대전 5일)",
+    venueName: "대전 교육장 (실습용)",
+    venueAddress: "대전광역시 유성구",
+    venueSido: "대전광역시",
+    venueSigungu: "유성구",
+    startDate: "2026-12-14",
+    endDate: "2026-12-18",
+    lodgingProvided: false,
+    mealsProvided: false,
+  },
+  {
+    id: "course-04",
+    name: "실습용 교육과정 D (제주 3일)",
+    venueName: "제주 교육장 (실습용)",
+    venueAddress: "제주특별자치도 제주시",
+    venueSido: "제주특별자치도",
+    venueSigungu: "제주시",
+    startDate: "2027-01-12",
+    endDate: "2027-01-14",
+    lodgingProvided: false,
+    mealsProvided: false,
+  },
+  {
+    id: "course-05",
+    name: "실습용 교육과정 E (서울 1일, 식사 제공)",
+    venueName: "서울 교육장 (실습용)",
+    venueAddress: "서울특별시 영등포구",
+    venueSido: "서울특별시",
+    venueSigungu: "영등포구",
+    startDate: "2026-12-22",
+    endDate: "2026-12-22",
+    lodgingProvided: false,
+    mealsProvided: true,
+  },
+  {
+    id: "course-06",
+    name: "실습용 교육과정 F (세종 합숙 4일, 숙소·식사 제공)",
+    venueName: "세종 연수원 (실습용)",
+    venueAddress: "세종특별자치시",
+    venueSido: "세종특별자치시",
+    venueSigungu: "세종특별자치시",
+    startDate: "2027-02-02",
+    endDate: "2027-02-05",
+    lodgingProvided: true,
+    mealsProvided: true,
+  },
+];
+
+export function getCourse(id: string): Course | undefined {
+  return COURSES.find((c) => c.id === id);
+}
