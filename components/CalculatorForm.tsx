@@ -3,9 +3,10 @@
 // Design Ref: §5.1 ① 내 여비 계산하기 — 입력 카드 (가는 편·오는 편 구간, 숙박 박수, 박별 숙박비)
 import { useEffect, useState } from "react";
 import { SIDO_LIST, SIGUNGU } from "../data/sigungu";
-import { CUSTOM_COURSE_ID, CUSTOM_COURSE_LABEL, customToCourse } from "../lib/calc/course";
+import { CUSTOM_COURSE_ID, customToCourse } from "../lib/calc/course";
+import CourseFields, { EMPTY_COURSE } from "./CourseFields";
 import { countDays } from "../lib/calc/days";
-import type { CalculationResult, Course, TransportMode } from "../lib/calc/types";
+import type { CalculationResult, CustomCourseInput, TransportMode } from "../lib/calc/types";
 import EvidenceUpload from "./EvidenceUpload";
 import ExplainPanel from "./ExplainPanel";
 import ResultCard, { type ResultMeta } from "./ResultCard";
@@ -178,16 +179,27 @@ function LegFields({
   );
 }
 
-export default function CalculatorForm({ courses }: { courses: Course[] }) {
-  const [courseId, setCourseId] = useState("");
+export default function CalculatorForm() {
+  const courseId = CUSTOM_COURSE_ID; // 교육 장소·기간은 교육생이 직접 입력한다 (data/courses.ts에 등록된 과정은 없다)
   const [outbound, setOutbound] = useState<LegForm>(EMPTY_LEG);
   const [inbound, setInbound] = useState<LegForm>(EMPTY_LEG);
   const [sameReturn, setSameReturn] = useState(true);
   const [nights, setNights] = useState("0");
   const [lodging, setLodging] = useState<string[]>([]);
   const [mealDays, setMealDays] = useState("0");
+  // 자차 휘발유 가격 기준 기간(선택): 비우면 조회일의 전국 평균가
+  const [fuelStart, setFuelStart] = useState("");
+  const [fuelEnd, setFuelEnd] = useState("");
+  // 오피넷이 날짜별 가격을 주는 범위(최근 7일 + 오늘)를 날짜 선택칸의 min/max로 안내한다.
+  // 현재 시각은 서버에서 미리 만들 수 없는 값이라, 교통수단을 "자차"로 고르는 순간(브라우저)에 계산한다.
+  const [fuelRange, setFuelRange] = useState<{ min: string; max: string } | null>(null);
+  function ensureFuelRange() {
+    const iso = (d: Date) => new Date(d.getTime() - d.getTimezoneOffset() * 60_000).toISOString().slice(0, 10);
+    const now = new Date();
+    setFuelRange((prev) => prev ?? { min: iso(new Date(now.getTime() - 7 * 86_400_000)), max: iso(now) });
+  }
   // "기타" 과정: 교육생이 직접 입력하는 교육 장소·기간·숙소/식사 제공
-  const [custom, setCustom] = useState({ venueSido: "", venueSigungu: "", startDate: "", endDate: "", lodgingProvided: false, mealsProvided: false });
+  const [custom, setCustom] = useState<CustomCourseInput>(EMPTY_COURSE);
 
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -205,13 +217,13 @@ export default function CalculatorForm({ courses }: { courses: Course[] }) {
     target?.focus({ preventScroll: true });
   }, [errors]);
 
-  const isCustom = courseId === CUSTOM_COURSE_ID;
+  const usesCar = outbound.transport === "car" || inbound.transport === "car";
   const customValid =
     custom.venueSido !== "" &&
     (SIGUNGU[custom.venueSido] ?? []).includes(custom.venueSigungu) &&
     custom.startDate !== "" &&
     custom.endDate >= custom.startDate;
-  const course = isCustom ? (customValid ? customToCourse(custom) : undefined) : courses.find((c) => c.id === courseId);
+  const course = customValid ? customToCourse(custom) : undefined;
   const days = course ? countDays(course.startDate, course.endDate) : 0;
   const nightsCount = Math.max(0, Math.min(60, Number.parseInt(nights, 10) || 0));
 
@@ -234,7 +246,8 @@ export default function CalculatorForm({ courses }: { courses: Course[] }) {
     try {
       const payload = {
         courseId,
-        customCourse: isCustom ? custom : undefined,
+        customCourse: custom,
+        fuelPeriod: usesCar && (fuelStart || fuelEnd) ? { startDate: fuelStart, endDate: fuelEnd } : undefined,
         outbound: legPayload(outbound),
         inbound: legPayload(inboundValue),
         nights: nightsCount,
@@ -269,88 +282,7 @@ export default function CalculatorForm({ courses }: { courses: Course[] }) {
       <form onSubmit={submit} className="space-y-5" noValidate>
         <h2 className="text-xl font-semibold tracking-tight">① 내 여비 계산하기</h2>
 
-        <Field id="course" label="교육 과정" error={errors.courseId}>
-          <select id="course" className={inputCls} value={courseId} onChange={(e) => setCourseId(e.target.value)}>
-            <option value="">과정을 선택하세요</option>
-            {courses.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-            <option value={CUSTOM_COURSE_ID}>{CUSTOM_COURSE_LABEL}</option>
-          </select>
-        </Field>
-
-        {isCustom && (
-          <fieldset className="space-y-3 rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
-            <legend className="px-1 font-medium">교육 장소와 기간 직접 입력</legend>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Field id="custom-sido" label="교육 장소 시·도" error={errors["customCourse.venueSido"]}>
-                <select
-                  id="custom-sido"
-                  className={inputCls}
-                  value={custom.venueSido}
-                  onChange={(e) => setCustom((c) => ({ ...c, venueSido: e.target.value, venueSigungu: "" }))}
-                >
-                  <option value="">선택</option>
-                  {SIDO_LIST.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-              <Field id="custom-sigungu" label="교육 장소 시·군·구" error={errors["customCourse.venueSigungu"]}>
-                <select
-                  id="custom-sigungu"
-                  className={inputCls}
-                  value={custom.venueSigungu}
-                  disabled={custom.venueSido === ""}
-                  onChange={(e) => setCustom((c) => ({ ...c, venueSigungu: e.target.value }))}
-                >
-                  <option value="">선택</option>
-                  {(SIGUNGU[custom.venueSido] ?? []).map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-              <Field id="custom-start" label="교육 시작일" error={errors["customCourse.startDate"]}>
-                <input
-                  id="custom-start"
-                  type="date"
-                  className={inputCls}
-                  value={custom.startDate}
-                  onChange={(e) => setCustom((c) => ({ ...c, startDate: e.target.value, endDate: c.endDate < e.target.value ? e.target.value : c.endDate }))}
-                />
-              </Field>
-              <Field id="custom-end" label="교육 종료일" error={errors["customCourse.endDate"]}>
-                <input
-                  id="custom-end"
-                  type="date"
-                  className={inputCls}
-                  min={custom.startDate || undefined}
-                  value={custom.endDate}
-                  onChange={(e) => setCustom((c) => ({ ...c, endDate: e.target.value }))}
-                />
-              </Field>
-            </div>
-            <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
-              <label className="flex items-center gap-2">
-                <input type="checkbox" checked={custom.lodgingProvided} onChange={(e) => setCustom((c) => ({ ...c, lodgingProvided: e.target.checked }))} />
-                교육기관이 숙소를 제공해요 (숙박비 미지급)
-              </label>
-              <label className="flex items-center gap-2">
-                <input type="checkbox" checked={custom.mealsProvided} onChange={(e) => setCustom((c) => ({ ...c, mealsProvided: e.target.checked }))} />
-                교육기관이 식사를 제공해요 (식비 미지급)
-              </label>
-            </div>
-            <p className="text-xs text-zinc-600 dark:text-zinc-400">
-              등록되지 않은 교육이면 장소와 기간을 직접 입력하세요. 교육 일수는 시작일과 종료일을 모두 포함해서 세고, 최대 60일까지 입력할 수 있어요. 교육 장소는 목록에 있는 시·군·구에서 고를 수 있어요.
-            </p>
-          </fieldset>
-        )}
+        <CourseFields value={custom} onChange={setCustom} errors={errors} />
 
         {course && (
           <dl className="grid gap-x-6 gap-y-1 rounded-lg bg-zinc-100 p-3 text-sm sm:grid-cols-2 dark:bg-zinc-800">
@@ -366,7 +298,10 @@ export default function CalculatorForm({ courses }: { courses: Course[] }) {
           title="가는 편 (출발지 → 교육 장소)"
           placeLabel="출발지"
           value={outbound}
-          onChange={(p) => setOutbound((v) => ({ ...v, ...p }))}
+          onChange={(p) => {
+            setOutbound((v) => ({ ...v, ...p }));
+            if (p.transport === "car") ensureFuelRange();
+          }}
           errors={errors}
           errKey="outbound"
         />
@@ -381,11 +316,63 @@ export default function CalculatorForm({ courses }: { courses: Course[] }) {
           title="오는 편 (교육 장소 → 귀가지)"
           placeLabel="귀가지"
           value={inboundValue}
-          onChange={(p) => setInbound((v) => ({ ...v, ...p }))}
+          onChange={(p) => {
+            setInbound((v) => ({ ...v, ...p }));
+            if (p.transport === "car") ensureFuelRange();
+          }}
           placeLocked={sameReturn}
           errors={errors}
           errKey="inbound"
         />
+
+        {usesCar && (
+          <fieldset className="space-y-3 rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
+            <legend className="px-1 font-medium">휘발유 가격 기준 기간 (선택)</legend>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field id="fuel-start" label="시작일" error={errors["fuelPeriod.startDate"]}>
+                <input
+                  id="fuel-start"
+                  type="date"
+                  className={inputCls}
+                  min={fuelRange?.min}
+                  max={fuelRange?.max}
+                  value={fuelStart}
+                  onChange={(e) => {
+                    setFuelStart(e.target.value);
+                    if (fuelEnd && fuelEnd < e.target.value) setFuelEnd(e.target.value);
+                  }}
+                />
+              </Field>
+              <Field id="fuel-end" label="종료일" error={errors["fuelPeriod.endDate"]}>
+                <input
+                  id="fuel-end"
+                  type="date"
+                  className={inputCls}
+                  min={fuelStart || fuelRange?.min}
+                  max={fuelRange?.max}
+                  value={fuelEnd}
+                  onChange={(e) => setFuelEnd(e.target.value)}
+                />
+              </Field>
+            </div>
+            <p className="text-xs text-zinc-600 dark:text-zinc-400">
+              비워 두면 오늘(조회일)의 전국 평균 휘발유 가격을 써요. 기간을 고르면 그 기간 중 오피넷이 제공하는 날짜별 전국 평균가를 평균해서 써요. 오피넷은 최근 7일과 오늘 가격만
+              제공해서 그 밖의 날짜는 쓸 수 없고, 기간 안에 제공되는 날이 하나도 없으면 오늘 가격으로 계산하고 알려 드려요.
+            </p>
+            {(fuelStart || fuelEnd) && (
+              <button
+                type="button"
+                className="text-xs underline"
+                onClick={() => {
+                  setFuelStart("");
+                  setFuelEnd("");
+                }}
+              >
+                기간 지우고 조회일 가격 쓰기
+              </button>
+            )}
+          </fieldset>
+        )}
 
         <div className="grid gap-4 sm:grid-cols-2">
           <Field

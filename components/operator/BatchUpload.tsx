@@ -3,14 +3,17 @@
 // Design Ref: §5.3 운영자 화면 — 과정 선택 → 명단 붙여넣기/CSV 올리기 → 25명씩 나눠 산출(진행률·실패 묶음 다시 시도)
 import { useMemo, useState } from "react";
 import { CHUNK_SIZE, CSV_HEADER, MAX_PEOPLE, chunk, parseRows, toCsv } from "../../lib/calc/batch";
-import type { Course } from "../../lib/calc/types";
+import { CUSTOM_COURSE_ID } from "../../lib/calc/course";
+import type { CustomCourseInput } from "../../lib/calc/types";
+import CourseFields, { EMPTY_COURSE } from "../CourseFields";
 import BatchTable from "./BatchTable";
 import type { BatchOutcome } from "./types";
 
 const inputCls = "w-full rounded border border-zinc-400 bg-transparent px-3 py-2 text-sm dark:border-zinc-600";
 
-export default function BatchUpload({ courses }: { courses: Course[] }) {
-  const [courseId, setCourseId] = useState("");
+export default function BatchUpload() {
+  // 교육 장소·기간은 직접 입력한다 (자주 쓰는 장소 3곳은 고르면 자동으로 채워진다)
+  const [custom, setCustom] = useState<CustomCourseInput>(EMPTY_COURSE);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState({ done: 0, total: 0 });
@@ -50,7 +53,7 @@ export default function BatchUpload({ courses }: { courses: Course[] }) {
       const res = await fetch("/api/calculate-batch", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ courseId, rows }),
+        body: JSON.stringify({ courseId: CUSTOM_COURSE_ID, customCourse: custom, rows }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json?.error?.message ?? "계산하지 못했습니다");
@@ -67,7 +70,8 @@ export default function BatchUpload({ courses }: { courses: Course[] }) {
   }
 
   async function start(only?: number[]) {
-    if (!courseId) return setMessage("교육 과정을 선택해 주세요");
+    if (!custom.venueSido || !custom.venueSigungu) return setMessage("교육 장소를 선택해 주세요");
+    if (!custom.startDate || !custom.endDate) return setMessage("교육 시작일과 종료일을 입력해 주세요");
     if (parsed.rows.length === 0) return setMessage("계산할 명단이 없습니다");
     if (tooMany) return setMessage(`한 번에 최대 ${MAX_PEOPLE}명까지 계산할 수 있습니다`);
     setBusy(true);
@@ -88,17 +92,7 @@ export default function BatchUpload({ courses }: { courses: Course[] }) {
   const list = Object.values(outcomes).sort((a, b) => a.rowNo - b.rowNo);
   return (
     <div className="space-y-5">
-      <label className="block space-y-1">
-        <span className="text-sm font-medium">교육 과정</span>
-        <select className={inputCls} value={courseId} onChange={(e) => setCourseId(e.target.value)}>
-          <option value="">과정을 선택하세요</option>
-          {courses.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
-      </label>
+      <CourseFields value={custom} onChange={setCustom} errors={{}} />
 
       <div className="space-y-2">
         <div className="flex flex-wrap items-center gap-2">

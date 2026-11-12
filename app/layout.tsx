@@ -15,7 +15,7 @@ const archivo = Archivo({
 });
 
 export const metadata: Metadata = {
-  title: "스마트 교육여비 산출시스템",
+  title: "스마트 교육여비 계산기",
   description: "교육 과정과 이동 정보를 입력하면 항목별 여비와 규정 근거를 확인할 수 있는 서비스",
 };
 

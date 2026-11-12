@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import BatchUpload from "../../components/operator/BatchUpload";
-import { COURSES } from "../../data/courses";
 
 export const metadata: Metadata = {
-  title: "운영자 일괄 산출 | 스마트 교육여비 산출시스템",
+  title: "운영자 일괄 산출 | 스마트 교육여비 계산기",
   robots: { index: false, follow: false },
 };
 
@@ -20,7 +19,7 @@ export default function OperatorPage() {
           </Link>
         </p>
       </header>
-      <BatchUpload courses={COURSES} />
+      <BatchUpload />
     </main>
   );
 }

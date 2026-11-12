@@ -3,6 +3,7 @@
 // - 자차: 네이버 지도 길찾기 링크와 조회 거리, 오피넷 전국 평균 휘발유 가격·기준일과 바로가기
 import { won } from "../lib/calc/days";
 import type { LegEvidence, LookupEvidence } from "../lib/external/lookups";
+import EvidenceScreens from "./EvidenceScreens";
 
 function ymd(s: string): string {
   return s.length === 8 ? `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}` : s;
@@ -65,7 +66,7 @@ function RailTable({ leg }: { leg: LegEvidence }) {
   );
 }
 
-export default function LookupEvidencePanel({ evidence }: { evidence: LookupEvidence }) {
+export default function LookupEvidencePanel({ evidence, fetchedAt }: { evidence: LookupEvidence; fetchedAt: string }) {
   const railLegs = evidence.legs.filter((l) => l.rail);
   const carLegs = evidence.legs.filter((l) => l.car);
   if (railLegs.length === 0 && carLegs.length === 0 && !evidence.gasoline) return null;
@@ -115,6 +116,7 @@ export default function LookupEvidencePanel({ evidence }: { evidence: LookupEvid
               자차 교통비 = (거리 × 휘발유 가격 ÷ 연비) + 하이패스 실비이고, 위 철도 요금 상한을 넘으면 상한까지만 인정해요. 링크가
               열리지 않거나 경로가 다르면 지도에서 두 지역을 직접 검색해 비교해 보세요.
             </p>
+            <EvidenceScreens evidence={evidence} fetchedAt={fetchedAt} />
           </section>
         )}
       </div>

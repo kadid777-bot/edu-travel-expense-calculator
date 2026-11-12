@@ -2,8 +2,6 @@ import Link from "next/link";
 import AskBox from "../components/AskBox";
 import CalculatorForm from "../components/CalculatorForm";
 import FaqList from "../components/FaqList";
-import StatementFill from "../components/StatementFill";
-import { COURSES } from "../data/courses";
 
 const NAV = [
   { href: "#calc", label: "계산하기", active: true },
@@ -16,14 +14,6 @@ const FACTS = [
   { big: "5", small: "항목별 금액과 근거 조항" },
   { big: "LIVE", small: "철도 요금·거리·유가 실시간 조회" },
   { big: "AI", small: "규정 질의응답 (조항 인용)" },
-];
-
-const STATEMENT = [
-  "여비는 추측이 아니라 규정과 실제",
-  "조회값으로 계산합니다. 한도를 넘는",
-  "금액은 이유와 함께 보여드리고, 확인되지",
-  "않는 값은 지어내지 않고 정직하게",
-  "알려드립니다.",
 ];
 
 export default function Home() {
@@ -50,13 +40,10 @@ export default function Home() {
             </Link>
           </div>
 
-          <div className="hero-gap grid gap-10 md:grid-cols-[1.3fr_1fr] md:items-end">
+          <h1 className="display hero-title hero-gap">스마트 교육여비 계산기</h1>
+
+          <div className="mt-8 grid gap-10 md:grid-cols-[1.3fr_1fr] md:items-end">
             <div>
-              <h1 className="display hero-title">
-                스마트 교육여비
-                <br />
-                산출시스템
-              </h1>
               <p className="mt-6 max-w-md text-[15px] leading-relaxed">
                 교육 과정과 이동 정보를 입력하면 항목별 여비와 규정 근거를 바로 확인할 수 있어요.
               </p>
@@ -90,19 +77,14 @@ export default function Home() {
         </span>
       </div>
 
-      {/* 선언문: 스크롤하면 단어가 회색에서 흰색으로 */}
-      <section className="statement-pad px-4" style={{ background: "var(--black)", color: "var(--text-on-black)" }}>
-        <StatementFill lines={STATEMENT} />
-      </section>
-
       {/* 도구 영역: 검은 배경 위의 테두리 있는 패널 */}
-      <div className="tool-pad-bottom px-3 sm:px-4" style={{ background: "var(--black)" }}>
+      <div className="tool-pad-bottom px-3 pt-8 sm:px-4 sm:pt-12" style={{ background: "var(--black)" }}>
         <main
           className="mx-auto w-full max-w-3xl space-y-12 rounded-[14px] border p-5 sm:p-8"
           style={{ background: "var(--panel)", color: "var(--foreground)", borderColor: "var(--hairline)" }}
         >
           <div id="calc" className="scroll-mt-6">
-            <CalculatorForm courses={COURSES} />
+            <CalculatorForm />
           </div>
           <div id="ask" className="scroll-mt-6">
             <AskBox />

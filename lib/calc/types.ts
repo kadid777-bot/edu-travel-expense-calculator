@@ -57,6 +57,8 @@ export interface CalculationInput {
   lodgingActuals?: number[]; // 박별 숙박비 실비. 길이 = nights
   /** 식비를 청구하는 일수. 식비는 교육에 포함되는 경우가 많아 기본 0(제외)이고, 식사가 제공되지 않은 날만 입력한다 */
   mealDays?: number;
+  /** 자차 휘발유 가격을 정할 기간(선택). 없으면 조회일의 전국 평균가. 오피넷이 제공하는 날짜(최근 7일+오늘)만 평균에 쓴다 */
+  fuelPeriod?: { startDate: string; endDate: string };
 }
 
 /** 항목별 결과 */

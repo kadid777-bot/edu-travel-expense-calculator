@@ -47,6 +47,9 @@ const baseSchema = z.object({
     .min(0, "숙박 박수는 0 이상이어야 합니다")
     .max(60, "숙박 박수가 너무 큽니다"),
   lodgingActuals: z.array(money).max(61).optional(),
+  fuelPeriod: z
+    .object({ startDate: z.string().max(10).default(""), endDate: z.string().max(10).default("") })
+    .optional(),
   mealDays: z.number({ error: "식비 청구 일수를 숫자로 입력해 주세요" }).int("식비 청구 일수는 정수로 입력해 주세요").min(0, "식비 청구 일수는 0 이상이어야 합니다").max(60, "식비 청구 일수가 너무 큽니다").optional(),
 });
 
@@ -97,6 +100,17 @@ export const calculationInputSchema = baseSchema.superRefine((v, ctx) => {
       path: ["nights"],
       message: `숙박 박수는 ${maxNights}박 이하여야 합니다 (교육 ${days}일)`,
     });
+  }
+
+  if (v.fuelPeriod && (v.fuelPeriod.startDate !== "" || v.fuelPeriod.endDate !== "")) {
+    const { startDate, endDate } = v.fuelPeriod;
+    const bad = (path: string, message: string) => ctx.addIssue({ code: "custom", path: ["fuelPeriod", path], message });
+    if (!validDate(startDate)) bad("startDate", "휘발유 가격 기준 시작일을 입력해 주세요");
+    if (!validDate(endDate)) bad("endDate", "휘발유 가격 기준 종료일을 입력해 주세요");
+    if (validDate(startDate) && validDate(endDate)) {
+      if (endDate < startDate) bad("endDate", "종료일은 시작일보다 같거나 늦어야 합니다");
+      else if (countDays(startDate, endDate) > 60) bad("endDate", "휘발유 가격 기준 기간은 60일 이하로 입력해 주세요");
+    }
   }
 
   if (v.mealDays !== undefined && v.mealDays > days) {

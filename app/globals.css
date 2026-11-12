@@ -84,22 +84,14 @@ body {
   padding-bottom: calc(72 * var(--u));
 }
 .hero-title {
-  font-size: calc(84 * var(--u));
-  /* 한글은 Archivo에 없어 대체 글꼴로 그려지므로 영문보다 줄 간격·자간을 넉넉히 */
+  font-size: calc(72 * var(--u));
+  /* 한 줄로 보이게 하고, 한글은 Archivo에 없어 대체 글꼴로 그려지므로 자간을 넉넉히 */
+  white-space: nowrap;
   line-height: 1.05;
   letter-spacing: -0.045em;
-  word-break: keep-all;
 }
 .hero-gap {
   margin-top: calc(96 * var(--u));
-}
-.statement-pad {
-  padding-top: calc(170 * var(--u));
-  padding-bottom: calc(150 * var(--u));
-}
-.statement-text {
-  word-break: keep-all; /* 한글 단어 중간에서 줄이 바뀌지 않게 */
-  font-size: calc(52 * var(--u));
 }
 .tool-pad-bottom {
   padding-bottom: calc(150 * var(--u));
@@ -111,17 +103,10 @@ body {
     padding-bottom: calc(40 * var(--u));
   }
   .hero-title {
-    font-size: calc(42 * var(--u));
+    font-size: min(calc(27 * var(--u)), 46px);
   }
   .hero-gap {
     margin-top: calc(40 * var(--u));
-  }
-  .statement-pad {
-    padding-top: calc(80 * var(--u));
-    padding-bottom: calc(80 * var(--u));
-  }
-  .statement-text {
-    font-size: calc(28 * var(--u));
   }
   .tool-pad-bottom {
     padding-bottom: calc(60 * var(--u));

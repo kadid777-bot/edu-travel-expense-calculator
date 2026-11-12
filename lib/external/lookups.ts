@@ -6,8 +6,8 @@ import type { CalculationInput, LegInput, LegLookup, Lookups } from "../calc/typ
 import { resolveCourse } from "../calc/course";
 import { isLocalLeg } from "../calc/zone";
 import { runLimited } from "./http";
-import { getDrivingDistanceKm } from "./naver-maps";
-import { getGasolinePrice } from "./opinet";
+import { getDrivingRoute } from "./naver-maps";
+import { getGasolineForPeriod, getGasolinePrice, type DailyPrice } from "./opinet";
 import { getRailFareCap, railStationIssue } from "./tago";
 
 /** 교육생이 직접 확인할 수 있도록 남기는 조회 근거 (계산에는 쓰지 않는다) */
@@ -24,11 +24,24 @@ export interface LegEvidence {
     grades: { grade: string; fare: number }[];
     cap: number;
   };
-  car?: { distanceKm: number; naverUrl: string };
+  car?: {
+    distanceKm: number;
+    naverUrl: string;
+    durationMin: number | null;
+    tollFare: number | null;
+    path: [number, number][];
+    start: [number, number];
+    goal: [number, number];
+  };
 }
 export interface LookupEvidence {
   legs: LegEvidence[];
-  gasoline?: { price: number; tradeDate: string };
+  gasoline?: {
+    price: number;
+    tradeDate: string;
+    /** 기간을 골랐으면 평균에 쓴 날짜별 가격과 고른 기간 */
+    period?: { startDate: string; endDate: string; days: DailyPrice[]; requestedDays: number; fellBack: boolean };
+  };
   links: { korail: string; opinet: string };
 }
 
@@ -112,6 +125,9 @@ export async function getLookups(input: CalculationInput): Promise<LookupResult>
     { fare: null, distanceKm: null, gasolinePrice: null },
   ];
 
+  const fp = input.fuelPeriod;
+  const wantsPeriod = needsFuel && !!fp && fp.startDate !== "" && fp.endDate !== "";
+  const periodTask = wantsPeriod ? getGasolineForPeriod(fp!.startDate.replaceAll("-", ""), fp!.endDate.replaceAll("-", "")) : Promise.resolve(null);
   const gasolineTask = needsFuel ? getGasolinePrice() : Promise.resolve(null);
   const tasks = active.flatMap((l) => {
     const idx = l.leg === input.outbound ? 0 : 1;
@@ -132,12 +148,13 @@ export async function getLookups(input: CalculationInput): Promise<LookupResult>
     ];
     if (l.leg.transport === "car") {
       list.push(async () => {
-        const km = await getDrivingDistanceKm(l.from, l.to);
+        const route = await getDrivingRoute(l.from, l.to);
+        const km = route ? route.distanceKm : null;
         out[idx].distanceKm = km;
         const url = naverRouteUrl(l.from, l.to);
         if (km !== null && url) {
           const ev = (legEvidence[idx] ??= { label: idx === 0 ? "가는 편" : "오는 편", from: `${l.from.sido} ${l.from.sigungu}`, to: `${l.to.sido} ${l.to.sigungu}` });
-          ev.car = { distanceKm: km, naverUrl: url };
+          ev.car = { distanceKm: km, naverUrl: url, durationMin: route!.durationMin, tollFare: route!.tollFare, path: route!.path, start: route!.start, goal: route!.goal };
         }
       });
     }
@@ -145,14 +162,27 @@ export async function getLookups(input: CalculationInput): Promise<LookupResult>
   });
   await runLimited(tasks, 8);
 
-  const gas = await gasolineTask;
+  const todayGas = await gasolineTask;
+  const periodGas = await periodTask;
+  // 고른 기간에 오피넷 제공 날짜가 있으면 그 평균, 없으면 조회일 평균으로 대신하고 알린다
+  const gas = periodGas ? { price: periodGas.price, tradeDate: todayGas?.tradeDate ?? "" } : todayGas;
   if (gas) {
     for (const l of active) {
       if (l.leg.transport === "car") out[l === legs[0] ? 0 : 1].gasolinePrice = gas.price;
     }
-    notes.push(
-      `휘발유 평균가는 출장 당일이 아니라 오피넷 기준일(${gas.tradeDate}) 전국 평균가입니다 (오피넷 오픈 API는 날짜별 가격을 주지 않습니다)`,
-    );
+    if (periodGas) {
+      const list = periodGas.days.map((d) => `${d.date.slice(4, 6)}/${d.date.slice(6, 8)}`).join(", ");
+      notes.push(
+        `휘발유 가격은 선택한 기간(${fp!.startDate} ~ ${fp!.endDate}) 중 오피넷이 제공하는 ${periodGas.days.length}일(${list})의 전국 평균가를 평균한 값입니다${periodGas.days.length < periodGas.requestedDays ? " (오피넷 오픈 API는 최근 7일과 오늘 가격만 제공해서 나머지 날짜는 쓰지 않았습니다)" : ""}`,
+      );
+    } else {
+      if (wantsPeriod) {
+        notes.push("선택한 기간의 가격은 오피넷이 제공하지 않아(최근 7일과 오늘만 제공) 조회일 전국 평균가로 계산했습니다");
+      }
+      notes.push(
+        `휘발유 평균가는 출장 당일이 아니라 오피넷 기준일(${gas.tradeDate}) 전국 평균가입니다 (오피넷 오픈 API는 날짜별 가격을 주지 않습니다)`,
+      );
+    }
   }
   if (active.length > 0) {
     notes.push("열차요금 상한은 같은 구간에서 열차 종류별로 요금이 다를 때 가장 높은 일반실(성인) 요금입니다");
@@ -160,7 +190,15 @@ export async function getLookups(input: CalculationInput): Promise<LookupResult>
 
   const evidence: LookupEvidence = {
     legs: legEvidence.filter((e): e is LegEvidence => e !== undefined),
-    gasoline: gas ? { price: gas.price, tradeDate: gas.tradeDate } : undefined,
+    gasoline: gas
+      ? {
+          price: gas.price,
+          tradeDate: gas.tradeDate,
+          period: wantsPeriod
+            ? { startDate: fp!.startDate, endDate: fp!.endDate, days: periodGas?.days ?? [], requestedDays: periodGas?.requestedDays ?? 0, fellBack: !periodGas }
+            : undefined,
+        }
+      : undefined,
     links: LINKS,
   };
   return { lookups: { outbound: out[0], inbound: out[1] }, mock: false, fetchedAt, notes: [...new Set(notes)], evidence };

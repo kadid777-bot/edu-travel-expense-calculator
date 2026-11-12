@@ -90,7 +90,7 @@ export default function ResultCard({ result, meta }: { result: CalculationResult
         <span className="font-medium">합계</span>
         <span className="text-2xl font-bold tabular-nums">{won(result.total)}</span>
       </div>
-      {meta.evidence && <LookupEvidencePanel evidence={meta.evidence} />}
+      {meta.evidence && <LookupEvidencePanel evidence={meta.evidence} fetchedAt={meta.fetchedAt} />}
       {meta.notes && meta.notes.length > 0 && (
         <ul className="list-disc space-y-0.5 pl-5 text-xs text-zinc-600 dark:text-zinc-400">
           {meta.notes.map((n) => (

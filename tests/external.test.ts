@@ -4,8 +4,9 @@ import { getCoord, missingCoords } from "../data/coords";
 import { STATIONS_BY_SIDO, findStations } from "../data/stations";
 import { SIGUNGU } from "../data/sigungu";
 import { clearMemo, memo, runLimited } from "../lib/external/http";
-import { pickDistanceKm, getDrivingDistanceKm } from "../lib/external/naver-maps";
-import { pickGasoline, getGasolinePrice } from "../lib/external/opinet";
+import { pickDistanceKm, getDrivingDistanceKm, pickRoute, simplifyPath } from "../lib/external/naver-maps";
+import { gasolineEvidenceSvg, projectPoints, routeEvidenceSvg } from "../lib/evidence-image";
+import { pickGasoline, getGasolinePrice, pickDaily, averageForPeriod, getGasolineForPeriod } from "../lib/external/opinet";
 import { getRailFareCap, pickFaresByGrade, pickMaxFare } from "../lib/external/tago";
 import { naverRouteUrl } from "../lib/external/lookups";
 
@@ -257,5 +258,89 @@ describe("서울은 서울역·용산역·수서역 중 가장 높은 요금이 
     const r = await getRailFareCap({ sido: "부산광역시", sigungu: "해운대구" }, { sido: "서울특별시", sigungu: "강남구" }, "2026-12-01");
     expect(r?.fare).toBe(54_400);
     expect(r?.arrStation).toBe("서울");
+  });
+});
+
+describe("증빙 화면 데이터 (네이버 경로선·SVG)", () => {
+  it("경로선은 최대 점 개수로 줄이고 처음·끝 점을 지킨다", () => {
+    const path = Array.from({ length: 2394 }, (_, i) => [127 + i / 1000, 36 + i / 2000] as [number, number]);
+    const out = simplifyPath(path, 220);
+    expect(out).toHaveLength(220);
+    expect(out[0]).toEqual(path[0]);
+    expect(out[219]).toEqual(path[2393]);
+    expect(simplifyPath(path.slice(0, 50), 220)).toHaveLength(50);
+  });
+
+  it("응답에서 거리·소요·통행료·경로를 꺼내고, 경로가 없어도 거리는 돌려준다", () => {
+    const json = { code: 0, route: { traoptimal: [{ summary: { distance: 183788, duration: 10424651, tollFare: 9100 }, path: [[127.4, 36.3], [127.0, 37.5]] as [number, number][] }] } };
+    const r = pickRoute(json, [127.45, 36.31], [127.04, 37.51]);
+    expect(r?.distanceKm).toBe(183.8);
+    expect(r?.durationMin).toBe(174);
+    expect(r?.tollFare).toBe(9100);
+    expect(r?.path).toHaveLength(2);
+    expect(pickRoute({ code: 0, route: { traoptimal: [{ summary: { distance: 5000 } }] } }, [0, 0], [1, 1])?.path).toEqual([]);
+    expect(pickRoute({ code: 1 }, [0, 0], [1, 1])).toBeNull();
+  });
+
+  it("증빙 SVG에 거리·가격·기준일·출처가 들어가고, 이름의 특수문자는 가려진다", () => {
+    const svg = routeEvidenceSvg({ label: "가는 편", fromName: "A<b>", toName: "대전광역시 동구", distanceKm: 183.7, durationMin: 174, tollFare: 9100, path: [[127.4, 36.3], [127.0, 37.5]], start: [127.4, 36.3], goal: [127.0, 37.5], fetchedAt: "2026-11-12T05:00:00Z" });
+    expect(svg).toContain("183.7");
+    expect(svg).toContain("Maps Directions 5");
+    expect(svg).toContain("A&lt;b&gt;");
+    expect(svg).not.toContain("A<b>");
+    const gas = gasolineEvidenceSvg({ price: 1854.94, tradeDate: "20261112", fetchedAt: "2026-11-12T05:00:00Z" });
+    expect(gas).toContain("1,854.94");
+    expect(gas).toContain("2026-11-12");
+    expect(gas).toContain("오피넷");
+  });
+
+  it("경도·위도 점은 칸 안에 들어오게 투영한다", () => {
+    const pts = projectPoints([[127, 36], [128, 37]], { x: 0, y: 0, w: 400, h: 300 });
+    for (const [x, y] of pts) {
+      expect(x).toBeGreaterThanOrEqual(0);
+      expect(x).toBeLessThanOrEqual(400);
+      expect(y).toBeGreaterThanOrEqual(0);
+      expect(y).toBeLessThanOrEqual(300);
+    }
+    expect(pts[1][1]).toBeLessThan(pts[0][1]); // 북쪽(위도 큼)이 위
+  });
+});
+
+describe("오피넷 기간 평균 (교육생이 시작일·종료일 선택)", () => {
+  const recent = {
+    RESULT: {
+      OIL: [
+        { DATE: "20261105", PRODCD: "B027", PRICE: 1855.27 },
+        { DATE: "20261106", PRODCD: "B027", PRICE: 1855.43 },
+        { DATE: "20261107", PRODCD: "B027", PRICE: 1855.29 },
+        { DATE: "20261108", PRODCD: "D047", PRICE: 1700 }, // 다른 유종은 쓰지 않는다
+      ],
+    },
+  };
+  const today = { RESULT: { OIL: [{ TRADE_DT: "20261112", PRODCD: "B027", PRICE: "1854.94" }] } };
+
+  it("날짜별 응답에서 보통휘발유만 날짜순으로 꺼낸다", () => {
+    expect(pickDaily(recent).map((d) => d.date)).toEqual(["20261105", "20261106", "20261107"]);
+  });
+
+  it("고른 기간 안의 제공 날짜만 평균하고, 없으면 null", () => {
+    const h = pickDaily(recent);
+    const r = averageForPeriod(h, "20261106", "20261110");
+    expect(r?.days.map((d) => d.date)).toEqual(["20261106", "20261107"]);
+    expect(r?.price).toBe(1855.36); // (1855.43 + 1855.29) / 2
+    expect(r?.requestedDays).toBe(5);
+    expect(averageForPeriod(h, "20260901", "20260905")).toBeNull();
+    expect(averageForPeriod(h, "20261201", "20261203")).toBeNull();
+  });
+
+  it("오늘 값(avgAllPrice)도 기간에 포함되고, 키가 없으면 null", async () => {
+    vi.stubEnv("OPINET_API_KEY", "key");
+    stubFetch((url) => (url.includes("avgRecentPrice") ? recent : today));
+    const r = await getGasolineForPeriod("20261107", "20261112");
+    expect(r?.days.map((d) => d.date)).toEqual(["20261107", "20261112"]);
+    expect(r?.price).toBe(1855.12); // (1855.29 + 1854.94) / 2
+    expect(await getGasolineForPeriod("20260901", "20260903")).toBeNull();
+    vi.stubEnv("OPINET_API_KEY", "");
+    expect(await getGasolineForPeriod("20261107", "20261112")).toBeNull();
   });
 });

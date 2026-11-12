@@ -10,6 +10,7 @@ export default defineConfig({
     testTimeout: 120_000,
     hookTimeout: 120_000,
     fileParallelism: false,
+    setupFiles: ["tests/setup.ts"],
     env: loadEnv("", process.cwd(), ""),
   },
 });
