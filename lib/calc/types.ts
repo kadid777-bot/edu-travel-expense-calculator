@@ -36,13 +36,27 @@ export interface LegInput {
   tollActual?: number;
 }
 
+/** 교육생이 직접 입력하는 "기타" 교육 과정 (courseId가 "custom"일 때) */
+export interface CustomCourseInput {
+  venueSido: string;
+  venueSigungu: string;
+  startDate: string; // YYYY-MM-DD
+  endDate: string; // YYYY-MM-DD
+  lodgingProvided: boolean;
+  mealsProvided: boolean;
+}
+
 /** 계산 요청 */
 export interface CalculationInput {
   courseId: string;
+  /** courseId가 "custom"(기타)일 때 교육 장소·기간·숙소/식사 제공 여부 */
+  customCourse?: CustomCourseInput;
   outbound: LegInput; // 출발지 → 교육 장소
   inbound: LegInput; // 교육 장소 → 귀가지
   nights: number; // 숙박 박수
   lodgingActuals?: number[]; // 박별 숙박비 실비. 길이 = nights
+  /** 식비를 청구하는 일수. 식비는 교육에 포함되는 경우가 많아 기본 0(제외)이고, 식사가 제공되지 않은 날만 입력한다 */
+  mealDays?: number;
 }
 
 /** 항목별 결과 */

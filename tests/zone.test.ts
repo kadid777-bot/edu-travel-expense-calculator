@@ -34,7 +34,7 @@ describe("시내 판정 보강", () => {
 
   it("한 구간만 시내면 그 구간 교통비만 0원이고 숙박·식비는 지급한다", () => {
     const r = calculateExpense(
-      { courseId: "course-02", outbound: bus("해운대구"), inbound: bus("기장군"), nights: 0 },
+      { courseId: "course-02", outbound: bus("해운대구"), inbound: bus("기장군"), nights: 0, mealDays: 2 },
       { outbound: { fare: null }, inbound: { fare: 30000 } },
     );
     expect(r.shortDistance).toEqual({ outbound: true, inbound: false });

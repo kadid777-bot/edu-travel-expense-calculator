@@ -15,6 +15,7 @@ function error(status: number, code: string, message: string, details: object = 
 
 const bodySchema = z.object({
   courseId: z.string().min(1).max(40),
+  customCourse: z.unknown().optional(),
   rows: z.array(z.object({ rowNo: z.number().int().min(1).max(100000) }).passthrough()).min(1),
 });
 
@@ -42,7 +43,7 @@ export async function POST(request: Request) {
     const results = await runLimited(
       parsed.data.rows.map((row) => async () => {
         const { rowNo, ...rest } = row as { rowNo: number } & Record<string, unknown>;
-        const checked = validateInput({ ...rest, courseId });
+        const checked = validateInput({ ...rest, courseId, customCourse: parsed.data.customCourse });
         if (!checked.ok) {
           return { rowNo, error: { message: checked.message, fieldErrors: checked.fieldErrors } };
         }

@@ -7,13 +7,22 @@ export interface StationPair {
   rail: string | null; // 대표 철도역 이름 (TAGO 표기)
   railId: string | null; // TAGO 역 ID (nodeid)
   bus: string | null; // 현재 미사용 (고속버스 상한도 열차요금)
+  /** 그 지역에서 이용할 수 있는 역이 여럿이면 모두(서울: 서울역·용산역·수서역). 요금은 이 역들 중 가장 높은 금액을 상한으로 한다 */
+  group?: { rail: string; railId: string }[];
 }
 
 const st = (rail: string, railId: string): StationPair => ({ rail, railId, bus: null });
 const NONE: StationPair = { rail: null, railId: null, bus: null };
 
+const SEOUL_GROUP = [
+  { rail: "서울", railId: "NAT010000" },
+  { rail: "용산", railId: "NAT010032" },
+  { rail: "수서", railId: "NATH30000" },
+];
+
 export const STATIONS_BY_SIDO: Record<string, StationPair> = {
-  서울특별시: st("서울", "NAT010000"),
+  // 서울은 어느 구든 서울역·용산역·수서역을 모두 조회해 가장 높은 요금을 상한으로 한다
+  서울특별시: { ...st("서울", "NAT010000"), group: SEOUL_GROUP },
   부산광역시: st("부산", "NAT014445"),
   대구광역시: st("동대구", "NAT013271"),
   인천광역시: st("광명", "NATH10219"), // 인천은 고속철도 직결역이 없어 가까운 광명역으로 둠

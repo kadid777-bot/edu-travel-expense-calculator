@@ -3,6 +3,7 @@
 // Design Ref: §5.1 ① 내 여비 계산하기 — 입력 카드 (가는 편·오는 편 구간, 숙박 박수, 박별 숙박비)
 import { useEffect, useState } from "react";
 import { SIDO_LIST, SIGUNGU } from "../data/sigungu";
+import { CUSTOM_COURSE_ID, CUSTOM_COURSE_LABEL, customToCourse } from "../lib/calc/course";
 import { countDays } from "../lib/calc/days";
 import type { CalculationResult, Course, TransportMode } from "../lib/calc/types";
 import EvidenceUpload from "./EvidenceUpload";
@@ -184,6 +185,9 @@ export default function CalculatorForm({ courses }: { courses: Course[] }) {
   const [sameReturn, setSameReturn] = useState(true);
   const [nights, setNights] = useState("0");
   const [lodging, setLodging] = useState<string[]>([]);
+  const [mealDays, setMealDays] = useState("0");
+  // "기타" 과정: 교육생이 직접 입력하는 교육 장소·기간·숙소/식사 제공
+  const [custom, setCustom] = useState({ venueSido: "", venueSigungu: "", startDate: "", endDate: "", lodgingProvided: false, mealsProvided: false });
 
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -201,7 +205,13 @@ export default function CalculatorForm({ courses }: { courses: Course[] }) {
     target?.focus({ preventScroll: true });
   }, [errors]);
 
-  const course = courses.find((c) => c.id === courseId);
+  const isCustom = courseId === CUSTOM_COURSE_ID;
+  const customValid =
+    custom.venueSido !== "" &&
+    (SIGUNGU[custom.venueSido] ?? []).includes(custom.venueSigungu) &&
+    custom.startDate !== "" &&
+    custom.endDate >= custom.startDate;
+  const course = isCustom ? (customValid ? customToCourse(custom) : undefined) : courses.find((c) => c.id === courseId);
   const days = course ? countDays(course.startDate, course.endDate) : 0;
   const nightsCount = Math.max(0, Math.min(60, Number.parseInt(nights, 10) || 0));
 
@@ -224,9 +234,11 @@ export default function CalculatorForm({ courses }: { courses: Course[] }) {
     try {
       const payload = {
         courseId,
+        customCourse: isCustom ? custom : undefined,
         outbound: legPayload(outbound),
         inbound: legPayload(inboundValue),
         nights: nightsCount,
+        mealDays: course?.mealsProvided ? undefined : Math.max(0, Number.parseInt(mealDays, 10) || 0),
         lodgingActuals: course?.lodgingProvided ? undefined : lodging.slice(0, nightsCount).map(toNumber),
       };
       const res = await fetch("/api/calculate", {
@@ -255,7 +267,7 @@ export default function CalculatorForm({ courses }: { courses: Course[] }) {
   return (
     <div className="space-y-10">
       <form onSubmit={submit} className="space-y-5" noValidate>
-        <h2 className="text-xl font-semibold">① 내 여비 계산하기</h2>
+        <h2 className="text-xl font-semibold tracking-tight">① 내 여비 계산하기</h2>
 
         <Field id="course" label="교육 과정" error={errors.courseId}>
           <select id="course" className={inputCls} value={courseId} onChange={(e) => setCourseId(e.target.value)}>
@@ -265,8 +277,80 @@ export default function CalculatorForm({ courses }: { courses: Course[] }) {
                 {c.name}
               </option>
             ))}
+            <option value={CUSTOM_COURSE_ID}>{CUSTOM_COURSE_LABEL}</option>
           </select>
         </Field>
+
+        {isCustom && (
+          <fieldset className="space-y-3 rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
+            <legend className="px-1 font-medium">교육 장소와 기간 직접 입력</legend>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field id="custom-sido" label="교육 장소 시·도" error={errors["customCourse.venueSido"]}>
+                <select
+                  id="custom-sido"
+                  className={inputCls}
+                  value={custom.venueSido}
+                  onChange={(e) => setCustom((c) => ({ ...c, venueSido: e.target.value, venueSigungu: "" }))}
+                >
+                  <option value="">선택</option>
+                  {SIDO_LIST.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field id="custom-sigungu" label="교육 장소 시·군·구" error={errors["customCourse.venueSigungu"]}>
+                <select
+                  id="custom-sigungu"
+                  className={inputCls}
+                  value={custom.venueSigungu}
+                  disabled={custom.venueSido === ""}
+                  onChange={(e) => setCustom((c) => ({ ...c, venueSigungu: e.target.value }))}
+                >
+                  <option value="">선택</option>
+                  {(SIGUNGU[custom.venueSido] ?? []).map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field id="custom-start" label="교육 시작일" error={errors["customCourse.startDate"]}>
+                <input
+                  id="custom-start"
+                  type="date"
+                  className={inputCls}
+                  value={custom.startDate}
+                  onChange={(e) => setCustom((c) => ({ ...c, startDate: e.target.value, endDate: c.endDate < e.target.value ? e.target.value : c.endDate }))}
+                />
+              </Field>
+              <Field id="custom-end" label="교육 종료일" error={errors["customCourse.endDate"]}>
+                <input
+                  id="custom-end"
+                  type="date"
+                  className={inputCls}
+                  min={custom.startDate || undefined}
+                  value={custom.endDate}
+                  onChange={(e) => setCustom((c) => ({ ...c, endDate: e.target.value }))}
+                />
+              </Field>
+            </div>
+            <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+              <label className="flex items-center gap-2">
+                <input type="checkbox" checked={custom.lodgingProvided} onChange={(e) => setCustom((c) => ({ ...c, lodgingProvided: e.target.checked }))} />
+                교육기관이 숙소를 제공해요 (숙박비 미지급)
+              </label>
+              <label className="flex items-center gap-2">
+                <input type="checkbox" checked={custom.mealsProvided} onChange={(e) => setCustom((c) => ({ ...c, mealsProvided: e.target.checked }))} />
+                교육기관이 식사를 제공해요 (식비 미지급)
+              </label>
+            </div>
+            <p className="text-xs text-zinc-600 dark:text-zinc-400">
+              등록되지 않은 교육이면 장소와 기간을 직접 입력하세요. 교육 일수는 시작일과 종료일을 모두 포함해서 세고, 최대 60일까지 입력할 수 있어요. 교육 장소는 목록에 있는 시·군·구에서 고를 수 있어요.
+            </p>
+          </fieldset>
+        )}
 
         {course && (
           <dl className="grid gap-x-6 gap-y-1 rounded-lg bg-zinc-100 p-3 text-sm sm:grid-cols-2 dark:bg-zinc-800">
@@ -361,12 +445,32 @@ export default function CalculatorForm({ courses }: { courses: Course[] }) {
           </p>
         )}
 
+        {course &&
+          (course.mealsProvided ? (
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">이 과정은 식사를 제공해서 식비를 청구하지 않아요.</p>
+          ) : (
+            <Field id="mealDays" label={`식비 청구 일수 (0 ~ ${days}일, 기본 0)`} error={errors.mealDays}>
+              <input
+                id="mealDays"
+                type="number"
+                min={0}
+                max={days}
+                className={inputCls}
+                value={mealDays}
+                onChange={(e) => setMealDays(e.target.value)}
+              />
+              <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+                식비는 교육에 포함되는 경우가 많아 기본으로 지급하지 않아요. 식사가 제공되지 않은 날이 있을 때만 그 일수를 입력하세요.
+              </p>
+            </Field>
+          ))}
+
         <EvidenceUpload />
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-lg bg-zinc-900 px-4 py-3 text-base font-medium text-white disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900"
+          className="lift w-full rounded-full bg-black px-4 py-3 text-base font-medium text-white disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900"
         >
           {loading ? "계산하는 중…" : "여비 계산하기"}
         </button>

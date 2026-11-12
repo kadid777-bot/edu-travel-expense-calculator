@@ -67,3 +67,12 @@ describe("POST /api/calculate-batch", () => {
     vi.unstubAllEnvs();
   });
 });
+
+describe("명단의 식비 청구 일수", () => {
+  it("12번째 칸이 있으면 mealDays로 읽고, 비어 있으면 넣지 않는다", () => {
+    const r = parseRows(`${LINE},2\n${LINE}`);
+    expect(r.rows[0].input.mealDays).toBe(2);
+    expect(r.rows[1].input.mealDays).toBeUndefined();
+    expect(parseRows(`${LINE},-1`).errors[0].message).toContain("식비 청구 일수");
+  });
+});

@@ -1,12 +1,16 @@
 // Design Ref: §5.1 ② 계산 결과 — 항목별 금액·근거 조항·초과 안내·경고·계산에 쓴 값
 import { won } from "../lib/calc/days";
 import type { CalculationResult } from "../lib/calc/types";
+import type { LookupEvidence } from "../lib/external/lookups";
+import LookupEvidencePanel from "./LookupEvidencePanel";
 
 export interface ResultMeta {
   mockLookups: boolean;
   fetchedAt: string;
   /** 조회 조건 안내 (예: 유가 기준일) */
   notes?: string[];
+  /** 한도 산출에 쓴 조회 근거 (직접 확인용) */
+  evidence?: LookupEvidence;
   /** 서버가 붙인 서명 (설명 요청에 그대로 돌려보낸다) */
   signature?: string;
 }
@@ -19,7 +23,7 @@ function formatTime(iso: string): string {
 export default function ResultCard({ result, meta }: { result: CalculationResult; meta: ResultMeta }) {
   return (
     <section aria-label="계산 결과" className="space-y-4">
-      <h2 className="text-xl font-semibold">② 계산 결과</h2>
+      <h2 className="text-xl font-semibold tracking-tight">② 계산 결과</h2>
 
       {meta.mockLookups && (
         <p role="status" className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-200">
@@ -86,6 +90,7 @@ export default function ResultCard({ result, meta }: { result: CalculationResult
         <span className="font-medium">합계</span>
         <span className="text-2xl font-bold tabular-nums">{won(result.total)}</span>
       </div>
+      {meta.evidence && <LookupEvidencePanel evidence={meta.evidence} />}
       {meta.notes && meta.notes.length > 0 && (
         <ul className="list-disc space-y-0.5 pl-5 text-xs text-zinc-600 dark:text-zinc-400">
           {meta.notes.map((n) => (

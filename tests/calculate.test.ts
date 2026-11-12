@@ -146,13 +146,19 @@ describe("계산 규칙", () => {
     expect(r.shortDistance).toEqual({ outbound: true, inbound: true });
   });
 
-  it("교육대상자 일비는 0원이고, 식사 제공 과정은 식비 0원", () => {
-    const r = calculateExpense(base, { outbound: rail(60_000), inbound: rail(60_000) });
+  it("교육대상자 일비는 0원이고, 식비는 기본 제외(청구 일수를 입력한 날만 지급)", () => {
+    const lk = { outbound: rail(60_000), inbound: rail(60_000) };
+    const r = calculateExpense(base, lk);
     expect(r.items[3].category).toBe("일비");
     expect(r.items[3].approved).toBe(0);
-    expect(r.items[4].approved).toBe(36_000 * 3);
+    expect(r.items[4].approved).toBe(0); // 기본값: 식비 제외
+    expect(r.items[4].notes[0]).toContain("식비 청구 일수");
+    expect(calculateExpense({ ...base, mealDays: 2 }, lk).items[4].approved).toBe(36_000 * 2);
+    expect(calculateExpense({ ...base, mealDays: 99 }, lk).items[4].approved).toBe(36_000 * 3); // 교육 일수까지만
+    expect(validateInput({ ...base, mealDays: 4 }).ok).toBe(false);
+    expect(validateInput({ ...base, mealDays: -1 }).ok).toBe(false);
     const meals: CalculationInput = { ...base, courseId: "course-05", nights: 0, lodgingActuals: [] };
-    expect(calculateExpense(meals, { outbound: rail(60_000), inbound: rail(60_000) }).items[4].approved).toBe(0);
+    expect(calculateExpense({ ...meals, mealDays: 1 }, { outbound: rail(60_000), inbound: rail(60_000) }).items[4].approved).toBe(0); // 식사 제공 과정은 청구해도 0원
   });
 
   it("같은 입력과 조회값이면 같은 결과가 나온다", () => {

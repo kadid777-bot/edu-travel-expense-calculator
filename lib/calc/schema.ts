@@ -1,9 +1,9 @@
 // Design Ref: §2.2 처리 1 — 입력 검사 (필수값이 비면 계산하지 않고 입력을 요청한다)
 // Plan SC: PRD §5 ① 필수 입력값 / FR-01, FR-18
 import { z } from "zod";
-import { COURSES } from "../../data/courses";
 import { RULES } from "../../data/rules";
 import { SIGUNGU } from "../../data/sigungu";
+import { CUSTOM_COURSE_ID, resolveCourse } from "./course";
 import { countDays } from "./days";
 import type { CalculationInput } from "./types";
 
@@ -21,7 +21,23 @@ const legSchema = z.object({
   tollActual: money.optional(),
 });
 
+const customCourseSchema = z.object({
+  venueSido: z.string().max(30).default(""),
+  venueSigungu: z.string().max(40).default(""),
+  startDate: z.string().max(10).default(""),
+  endDate: z.string().max(10).default(""),
+  lodgingProvided: z.boolean().default(false),
+  mealsProvided: z.boolean().default(false),
+});
+
+const MAX_CUSTOM_DAYS = 60;
+
+function validDate(s: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(s) && new Date(`${s}T00:00:00Z`).toISOString().slice(0, 10) === s;
+}
+
 const baseSchema = z.object({
+  customCourse: customCourseSchema.optional(),
   courseId: z.string({ error: "교육 과정을 선택해 주세요" }).min(1, "교육 과정을 선택해 주세요"),
   outbound: legSchema,
   inbound: legSchema,
@@ -31,10 +47,27 @@ const baseSchema = z.object({
     .min(0, "숙박 박수는 0 이상이어야 합니다")
     .max(60, "숙박 박수가 너무 큽니다"),
   lodgingActuals: z.array(money).max(61).optional(),
+  mealDays: z.number({ error: "식비 청구 일수를 숫자로 입력해 주세요" }).int("식비 청구 일수는 정수로 입력해 주세요").min(0, "식비 청구 일수는 0 이상이어야 합니다").max(60, "식비 청구 일수가 너무 큽니다").optional(),
 });
 
 export const calculationInputSchema = baseSchema.superRefine((v, ctx) => {
-  const course = COURSES.find((c) => c.id === v.courseId);
+  if (v.courseId === CUSTOM_COURSE_ID) {
+    // "기타": 교육생이 직접 입력한 교육 장소·기간을 검사한다
+    const c = v.customCourse;
+    const bad = (path: string, message: string) => ctx.addIssue({ code: "custom", path: ["customCourse", path], message });
+    if (!c) return bad("venueSido", "교육 장소를 입력해 주세요");
+    const list = Object.hasOwn(SIGUNGU, c.venueSido) ? SIGUNGU[c.venueSido] : undefined;
+    if (!list) bad("venueSido", "교육 장소 시·도를 선택해 주세요");
+    else if (!list.includes(c.venueSigungu)) bad("venueSigungu", "교육 장소 시·군·구를 선택해 주세요");
+    if (!validDate(c.startDate)) bad("startDate", "교육 시작일을 입력해 주세요");
+    if (!validDate(c.endDate)) bad("endDate", "교육 종료일을 입력해 주세요");
+    if (validDate(c.startDate) && validDate(c.endDate)) {
+      if (c.endDate < c.startDate) bad("endDate", "종료일은 시작일보다 같거나 늦어야 합니다");
+      else if (countDays(c.startDate, c.endDate) > MAX_CUSTOM_DAYS) bad("endDate", `교육 기간은 ${MAX_CUSTOM_DAYS}일 이하로 입력해 주세요`);
+    }
+    if (ctx.issues.length > 0) return;
+  }
+  const course = resolveCourse(v.courseId, v.customCourse);
   if (!course) {
     ctx.addIssue({ code: "custom", path: ["courseId"], message: "교육 과정을 다시 선택해 주세요" });
     return;
@@ -64,6 +97,10 @@ export const calculationInputSchema = baseSchema.superRefine((v, ctx) => {
       path: ["nights"],
       message: `숙박 박수는 ${maxNights}박 이하여야 합니다 (교육 ${days}일)`,
     });
+  }
+
+  if (v.mealDays !== undefined && v.mealDays > days) {
+    ctx.addIssue({ code: "custom", path: ["mealDays"], message: `식비 청구 일수는 교육 일수(${days}일) 이하여야 합니다` });
   }
 
   // 숙소를 제공하는 과정이 아니면 박별 숙박비 실비가 박수만큼 필요

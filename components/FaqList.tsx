@@ -18,7 +18,7 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: "식비는 얼마인가요?",
-    a: `교육 일수 × ${won(RULES.mealAllowance.amount)}이에요. 교육기관이 식사를 제공하면 지급하지 않아요.`,
+    a: `식비는 교육에 포함되는 경우가 많아 기본으로 지급하지 않아요(0원). 식사가 제공되지 않은 날이 있으면 "식비 청구 일수"를 입력하세요. 1일 ${won(RULES.mealAllowance.amount)} × 청구 일수로 계산하고, 교육 일수를 넘을 수 없어요. 교육기관이 식사를 제공하는 과정은 청구할 수 없어요.`,
   },
   {
     q: "일비는 받을 수 있나요?",
@@ -37,7 +37,7 @@ const FAQS: { q: string; a: string }[] = [
 export default function FaqList() {
   return (
     <section aria-label="자주 묻는 질문" className="space-y-3">
-      <h2 className="text-xl font-semibold">자주 묻는 질문</h2>
+      <h2 className="text-xl font-semibold tracking-tight">자주 묻는 질문</h2>
       <div className="space-y-2">
         {FAQS.map((f) => (
           <details key={f.q} className="rounded border border-zinc-300 px-4 py-3 dark:border-zinc-700">

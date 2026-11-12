@@ -1,6 +1,6 @@
 // Design Ref: §2.2 처리 5 — 계산 엔진 (순수 함수: 네트워크·화면을 모른다)
 // 금액은 모두 코드(정해진 공식)가 계산한다. 외부 조회값은 Lookups로 받는다.
-import { COURSES } from "../../data/courses";
+import { resolveCourse } from "./course";
 import { RULES } from "../../data/rules";
 import { countDays, won } from "./days";
 import type {
@@ -161,7 +161,7 @@ function lodgingItem(input: CalculationInput, course: Course): ExpenseItem {
 
 /** 여비를 계산한다. 같은 입력과 같은 조회값이면 언제나 같은 결과가 나온다 */
 export function calculateExpense(input: CalculationInput, lookups: Lookups): CalculationResult {
-  const course = COURSES.find((c) => c.id === input.courseId);
+  const course = resolveCourse(input.courseId, input.customCourse);
   if (!course) throw new Error(`없는 교육 과정: ${input.courseId}`);
 
   const days = countDays(course.startDate, course.endDate);
@@ -211,13 +211,22 @@ export function calculateExpense(input: CalculationInput, lookups: Lookups): Cal
     notes: ["교육대상자에게는 일비를 지급하지 않습니다"],
   };
 
-  const mealAmount = course.mealsProvided ? 0 : RULES.mealAllowance.amount * days;
+  // 식비는 기본 제외(교육에 포함되는 경우가 많다). 교육생이 식비 청구 일수를 입력한 날만 지급한다
+  const mealDays = course.mealsProvided ? 0 : Math.min(days, Math.max(0, Math.floor(input.mealDays ?? 0)));
+  const mealAmount = RULES.mealAllowance.amount * mealDays;
+  const mealNotes: string[] = [];
+  if (course.mealsProvided) mealNotes.push("교육기관이 식사를 제공하는 과정이라 식비를 지급하지 않습니다");
+  else if (mealDays === 0) {
+    mealNotes.push("식비는 교육에 포함되는 경우가 많아 기본값으로 지급하지 않습니다. 식사가 제공되지 않은 날이 있으면 식비 청구 일수를 입력해 주세요");
+  } else if (mealDays < days) {
+    mealNotes.push(`교육 ${days}일 중 식사가 제공되지 않은 ${mealDays}일분만 지급합니다`);
+  }
   const meal: ExpenseItem = {
     category: "식비",
     approved: mealAmount,
     refs: [RULES.mealAllowance.ref],
-    notes: course.mealsProvided ? ["교육기관이 식사를 제공하는 과정이라 식비를 지급하지 않습니다"] : [],
-    calcValues: { 교육일수: days, "1일식비": RULES.mealAllowance.amount },
+    notes: mealNotes,
+    calcValues: { 교육일수: days, 청구일수: mealDays, "1일식비": RULES.mealAllowance.amount },
   };
 
   const items = [outItem, inItem, lodging, daily, meal];

@@ -15,7 +15,7 @@ export const TRANSPORT_LABEL: Record<TransportMode, string> = { train: "기차",
 export const CSV_HEADER = [
   "이름", "가는편 시·도", "가는편 시·군·구", "가는편 교통수단", "가는편 교통비실비(자차는 하이패스)",
   "오는편 시·도", "오는편 시·군·구", "오는편 교통수단", "오는편 교통비실비(자차는 하이패스)",
-  "숙박 박수", "박별 숙박비(/로 구분)",
+  "숙박 박수", "박별 숙박비(/로 구분)", "식비 청구 일수(선택, 기본 0)",
 ];
 
 export interface BatchRow {
@@ -83,6 +83,10 @@ export function parseRows(text: string): ParsedRows {
     }
     const lodging = (cells[10] ?? "").split("/").map((x) => x.trim()).filter((x) => x !== "").map((x) => num(x));
     if (lodging.some((x) => x === undefined || Number.isNaN(x))) errs.push("박별 숙박비가 숫자가 아닙니다");
+    const mealDays = num(cells[11]);
+    if (mealDays !== undefined && (Number.isNaN(mealDays) || !Number.isInteger(mealDays) || mealDays < 0)) {
+      errs.push("식비 청구 일수는 0 이상의 정수여야 합니다");
+    }
     const outbound = leg(cells.slice(1, 5), "가는 편", errs);
     const inbound = leg(cells.slice(5, 9), "오는 편", errs);
     if (errs.length > 0) {
@@ -92,7 +96,7 @@ export function parseRows(text: string): ParsedRows {
     rows.push({
       rowNo: rows.length + 1,
       name: cells[0],
-      input: { outbound, inbound, nights: nights!, lodgingActuals: lodging as number[] },
+      input: { outbound, inbound, nights: nights!, lodgingActuals: lodging as number[], ...(mealDays ? { mealDays } : {}) },
     });
   });
   return { rows, errors };

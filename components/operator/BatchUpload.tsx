@@ -24,7 +24,7 @@ export default function BatchUpload({ courses }: { courses: Course[] }) {
   const chunks = useMemo(() => chunk(parsed.rows), [parsed.rows]);
 
   function downloadTemplate() {
-    const sample = ["홍길동", "서울특별시", "강남구", "기차", "30000", "서울특별시", "강남구", "기차", "30000", "1", "70000"];
+    const sample = ["홍길동", "서울특별시", "강남구", "기차", "30000", "서울특별시", "강남구", "기차", "30000", "1", "70000", "0"];
     const blob = new Blob([toCsv([CSV_HEADER, sample])], { type: "text/csv;charset=utf-8" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);

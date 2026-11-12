@@ -45,7 +45,7 @@ export default function AskBox() {
 
   return (
     <section aria-label="규정 질문" className="space-y-4">
-      <h2 className="text-xl font-semibold">③ 규정에 대해 물어보기</h2>
+      <h2 className="text-xl font-semibold tracking-tight">③ 규정에 대해 물어보기</h2>
 
       <form onSubmit={submit} className="space-y-3">
         <label htmlFor="question" className="sr-only">
@@ -78,7 +78,7 @@ export default function AskBox() {
         <button
           type="submit"
           disabled={loading || question.trim() === ""}
-          className="w-full rounded-lg bg-zinc-900 px-4 py-3 text-base font-medium text-white disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900"
+          className="lift w-full rounded-full bg-black px-4 py-3 text-base font-medium text-white disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900"
         >
           {loading ? "찾아보는 중…" : "질문하기"}
         </button>

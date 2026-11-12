@@ -122,7 +122,8 @@ export function referenceCalc(input: CalculationInput, lookups: Lookups): Refere
 
   // 교육대상자에게는 일비가 없고(별표 3 제1호), 식사를 제공하는 교육은 식비를 지급하지 않는다
   const daily = RULES.dailyAllowance.applies ? dailyAllowanceTotal(days) : 0;
-  const meal = course.mealsProvided ? 0 : RULES.mealAllowance.amount * days;
+  // 식비는 기본 제외, 교육생이 청구 일수(mealDays)를 입력한 날만(교육 일수 한도) 지급한다
+  const meal = course.mealsProvided ? 0 : RULES.mealAllowance.amount * Math.min(days, Math.max(0, Math.floor(input.mealDays ?? 0)));
 
   return {
     transportOutbound: out,

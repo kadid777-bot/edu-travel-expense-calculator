@@ -127,7 +127,7 @@ describe("SC-1·2·3·5: 채점 사례 20건을 실제 외부 조회값으로", 
       expect(result.items[1].approved).toBe(0);
       expect(result.warnings.join(" ")).toContain("요금을 조회하지 못했습니다");
       expect(result.items[2].approved).toBeGreaterThan(0); // 숙박비는 계속 계산
-      expect(result.items[4].approved).toBeGreaterThan(0); // 식비도 계속 계산
+      expect(result.items[4].approved).toBeGreaterThan(0); // 식비도 계속 계산 (case-01은 식비 청구 일수 3일)
       sc["SC-5 조회 실패 처리"] = { pass: true, detail: "키가 없을 때 교통비 보류 + 경고, 나머지 항목은 계산" };
     } finally {
       process.env.DATA_GO_KR_TRAIN_KEY = saved.train;
@@ -216,8 +216,15 @@ describe("SC-7: 키 노출 없음", () => {
     for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
       if (e.name === "node_modules" || e.name === ".git") continue;
       const p = path.join(dir, e.name);
-      if (e.isDirectory()) walk(p, out);
-      else if (fs.statSync(p).size < 6_000_000) out.push(p);
+      // 빌드가 만드는 심볼릭 링크/정션(.next/static/<빌드ID>)도 따라가서 안의 파일을 검사한다
+      let st: fs.Stats;
+      try {
+        st = fs.statSync(p);
+      } catch {
+        continue; // 개발 서버가 막 지운 파일
+      }
+      if (st.isDirectory()) walk(p, out);
+      else if (st.size < 6_000_000) out.push(p);
     }
   }
 
