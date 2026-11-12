@@ -1,7 +1,7 @@
 "use client";
 
 // Design Ref: §5.1 ① 내 여비 계산하기 — 입력 카드 (가는 편·오는 편 구간, 숙박 박수, 박별 숙박비)
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { SIDO_LIST, SIGUNGU } from "../data/sigungu";
 import { countDays } from "../lib/calc/days";
 import type { CalculationResult, Course, TransportMode } from "../lib/calc/types";
@@ -57,7 +57,7 @@ function Field({ id, label, error, children }: { id: string; label: string; erro
       </label>
       {children}
       {error && (
-        <p role="alert" className={errCls}>
+        <p role="alert" data-field-error data-error-for={id} className={errCls}>
           {error}
         </p>
       )}
@@ -140,7 +140,7 @@ function LegFields({
           ))}
         </div>
         {errors[`${errKey}.transport`] && (
-          <p role="alert" className={errCls}>
+          <p role="alert" data-field-error className={errCls}>
             {errors[`${errKey}.transport`]}
           </p>
         )}
@@ -190,6 +190,16 @@ export default function CalculatorForm({ courses }: { courses: Course[] }) {
   const [message, setMessage] = useState("");
   const [result, setResult] = useState<CalculationResult | null>(null);
   const [meta, setMeta] = useState<ResultMeta | null>(null);
+
+  // 계산에 실패해 입력 오류가 생기면 맨 위의 오류 칸으로 화면을 옮기고 그 칸에 커서를 둔다 (긴 입력 화면에서 오류를 못 찾는 일을 줄인다)
+  useEffect(() => {
+    if (Object.keys(errors).length === 0) return;
+    const first = document.querySelector<HTMLElement>("[data-field-error]");
+    if (!first) return;
+    const target = first.dataset.errorFor ? document.getElementById(first.dataset.errorFor) : null;
+    (target ?? first).scrollIntoView({ block: "center", behavior: "smooth" });
+    target?.focus({ preventScroll: true });
+  }, [errors]);
 
   const course = courses.find((c) => c.id === courseId);
   const days = course ? countDays(course.startDate, course.endDate) : 0;
@@ -337,7 +347,7 @@ export default function CalculatorForm({ courses }: { courses: Course[] }) {
                 ))}
               </div>
               {errors.lodgingActuals && (
-                <p role="alert" className={errCls}>
+                <p role="alert" data-field-error className={errCls}>
                   {errors.lodgingActuals}
                 </p>
               )}

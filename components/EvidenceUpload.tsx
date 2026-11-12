@@ -35,6 +35,9 @@ export default function EvidenceUpload() {
       <p className="text-xs text-zinc-600 dark:text-zinc-400">
         영수증·승차권 사진을 올려 입력한 금액과 맞는지 눈으로 비교할 수 있어요. 사진은 이 화면에서만 보이고 서버로 보내거나 저장하지 않아요.
       </p>
+      <p className="text-xs font-medium text-amber-700 dark:text-amber-400">
+        카드번호·주민등록번호 등 개인정보가 보이면 가린 사진을 올려 주세요.
+      </p>
       <input type="file" accept="image/*" multiple onChange={onChange} className="text-sm" aria-label="증빙 사진 선택" />
       {message && (
         <p role="alert" className="text-xs text-amber-700 dark:text-amber-400">
