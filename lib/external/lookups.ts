@@ -3,6 +3,7 @@
 import { getCourse } from "../../data/courses";
 import { findStations } from "../../data/stations";
 import type { CalculationInput, LegInput, LegLookup, Lookups } from "../calc/types";
+import { isLocalLeg } from "../calc/zone";
 import { runLimited } from "./http";
 import { getDrivingDistanceKm } from "./naver-maps";
 import { getGasolinePrice } from "./opinet";
@@ -57,7 +58,7 @@ export async function getLookups(input: CalculationInput): Promise<LookupResult>
   const venue = { sido: course.venueSido, sigungu: course.venueSigungu };
   const notes: string[] = [];
 
-  const isLocal = (leg: LegInput) => leg.sido === venue.sido && leg.sigungu === venue.sigungu;
+  const isLocal = (leg: LegInput) => isLocalLeg(leg, course);
   const legs = [
     { leg: input.outbound, from: input.outbound, to: venue, date: course.startDate }, // 가는 편: 교육 시작일 기준
     { leg: input.inbound, from: venue, to: input.inbound, date: course.endDate }, // 오는 편: 교육 종료일 기준

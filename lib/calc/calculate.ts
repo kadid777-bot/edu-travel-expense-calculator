@@ -14,15 +14,14 @@ import type {
   RuleRef,
 } from "./types";
 
+import { isLocalLeg } from "./zone";
 const JEJU = "제주특별자치도";
 const SEOUL = "서울특별시";
 const LOCAL_NOTICE = "시내 출장은 여비 지급 대상이 아닙니다";
 
 type LegCategory = "교통비(가는 편)" | "교통비(오는 편)";
 
-function isLocal(leg: LegInput, course: Course): boolean {
-  return leg.sido === course.venueSido && leg.sigungu === course.venueSigungu;
-}
+const isLocal = isLocalLeg;
 
 /** 교통비 한 구간(편도)을 계산한다 */
 function legItem(

@@ -88,8 +88,9 @@ export function referenceCalc(input: CalculationInput, lookups: Lookups): Refere
   if (!course) throw new Error(`없는 교육 과정: ${input.courseId}`);
 
   const days = countDays(course.startDate, course.endDate);
+  const city = (sido: string, sg: string) => (/(특별시|광역시|특별자치시)$/.test(sido) ? sido : sido + "|" + sg.split(" ")[0]);
   const sameZone = (leg: LegInput) =>
-    leg.sido === course.venueSido && leg.sigungu === course.venueSigungu;
+    city(leg.sido, leg.sigungu) === city(course.venueSido, course.venueSigungu);
 
   // 교육 여비는 시외출장만 대상이다. 두 구간 모두 교육 장소와 같은 시·군·구(시내)이면 여비를 지급하지 않는다.
   // 한 구간만 시내이면 그 구간의 교통비만 0원이고, 숙박비·식비는 시외 구간이 있으므로 지급한다(해석 — 확인 필요).

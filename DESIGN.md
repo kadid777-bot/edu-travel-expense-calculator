@@ -88,7 +88,7 @@
    ↓
 [처리 2] 과정 목록에서 교육 장소·기간(일수) 가져오기
    ↓
-[처리 3] 시내 판정 — 구간마다 출발지(오는 편은 귀가지)와 교육 장소가 같은 시·군·구인가? (교육은 시외출장만 대상)
+[처리 3] 시내 판정 — 구간마다 출발지(오는 편은 귀가지)와 교육 장소가 같은 시·군인가? (광역시는 구 무관) (교육은 시외출장만 대상)
    ↓
 [처리 4] 외부 요금 조회 (구간마다 교통수단에 필요한 것만, 구간들을 동시에, 각 5초 제한)
          · 모든 교통수단 공통 상한: TAGO 열차요금(일반실, 성인, 편도) — 시·군·구 → 대표 철도역 대응표(data/stations.ts)로 역을 찾고,
@@ -252,7 +252,7 @@ interface RuleTable {
   dailyAllowance: { amount: number; applies: boolean; ref: RuleRef };   // 일비 — 교육대상자는 applies=false(0원)
   mealAllowance: { amount: number; ref: RuleRef };    // 식비 정액
   carFuelEfficiency: { kmPerLiter: number; ref: RuleRef }; // 규정상 연비
-  shortDistance: {                                    // 시내(교육 장소와 같은 시·군·구) — 교육은 시외출장만 대상이라 flatTotal = 0
+  shortDistance: {                                    // 시내(교육 장소와 같은 시·군, 구가 달라도 같은 시) — 교육은 시외출장만 대상이라 flatTotal = 0
     flatTotal: number; // 시내 출장 정액 — 교육에는 0
     lodgingAllowed: boolean; skipExternalLookup: boolean; ref: RuleRef;
   };
@@ -490,7 +490,7 @@ interface RuleTable {
 | 2 | `/api/calculate` | 숙박 2박인데 박별 숙박비 실비가 없거나 2개가 아님 | 400 | `fieldErrors.lodgingActuals` 존재 |
 | 3 | `/api/calculate` | 실비가 한도 초과 | 200 | `approved` = 한도, `excess` > 0 |
 | 4 | `/api/calculate` | 외부 조회 실패(키 없음 상태) | 200 | `warnings`에 "요금을 조회하지 못했습니다" |
-| 5 | `/api/calculate` | 두 구간 모두 교육 장소와 같은 시·군·구(시내) | 200 | 모든 항목 0원, `shortDistance` 두 값 모두 true, "시내 출장은 여비 지급 대상이 아닙니다" 안내 |
+| 5 | `/api/calculate` | 두 구간 모두 교육 장소와 같은 시·군(시내, 여비세칙 제12조. 특별시·광역시는 구가 달라도 같은 시) | 200 | 모든 항목 0원, `shortDistance` 두 값 모두 true, "시내 출장은 여비 지급 대상이 아닙니다" 안내 |
 | 5-2 | `/api/calculate` | 오는 편 귀가지가 가는 편 출발지와 다름 | 200 | 두 구간의 거리·요금이 각각 다르게 계산되고 합산됨 |
 | 6 | `/api/ask` | 규정에 있는 질문 | 200 | `found` = true, `refs` 1개 이상 |
 | 7 | `/api/ask` | 규정에 없는 질문 | 200 | `found` = false, 고정 안내 문구 |
