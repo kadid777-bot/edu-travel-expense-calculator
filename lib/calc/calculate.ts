@@ -41,7 +41,7 @@ function legItem(
       category,
       approved: 0,
       refs: [RULES.shortDistance.ref],
-      notes: [`교육 장소와 같은 시·군·구라 시내 구간입니다. ${LOCAL_NOTICE}`],
+      notes: [`교육 장소와 교육 장소와 같은 시·군이라 시내 구간입니다. ${LOCAL_NOTICE}`],
     };
   }
 
@@ -58,7 +58,16 @@ function legItem(
 
   // 상한이 되는 열차요금을 모르면 한도 산출 불가 → 인정 보류
   if (rail === null) {
-    warnings.push(`${category}: 요금을 조회하지 못했습니다`);
+    const reason = lookup.fareReason;
+    if (reason === "same-station") {
+      warnings.push(`${category}: 두 지역의 대표 철도역이 같아 열차요금 상한을 정할 수 없습니다`);
+    } else if (reason === "no-station") {
+      warnings.push(`${category}: 근처에 열차 구간이 없어 요금을 조회하지 못했습니다`);
+    } else if (reason === "not-found") {
+      warnings.push(`${category}: 이 구간의 열차 요금 정보가 없어 요금을 조회하지 못했습니다 (직통 열차가 없을 수 있습니다)`);
+    } else {
+      warnings.push(`${category}: 요금을 조회하지 못했습니다`);
+    }
     notes.push("열차요금 상한을 정할 수 없어 인정을 보류했습니다. 운영자에게 문의해 주세요");
     return { category, actual: leg.transportActual, approved: 0, refs, notes };
   }
@@ -127,7 +136,7 @@ function lodgingItem(input: CalculationInput, course: Course): ExpenseItem {
     };
   }
   const cap = course.venueSido === SEOUL ? RULES.lodgingPerNight.seoul : RULES.lodgingPerNight.other;
-  const actuals = input.lodgingActuals ?? [];
+  const actuals = (input.lodgingActuals ?? []).slice(0, input.nights); // 박수보다 많이 보내도 박수만큼만 본다
   let approved = 0;
   let actualSum = 0;
   const notes: string[] = [];

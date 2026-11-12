@@ -31,6 +31,7 @@ export type AskOutcome =
 
 // ── 입력 검사 ────────────────────────────────────────────────────────────────────────
 const PII_PATTERNS: [RegExp, string][] = [
+  [/[공영일이삼사오육칠팔구]{9,}/, "전화번호"],
   [/01[016789][-.\s]?\d{3,4}[-.\s]?\d{4}/, "전화번호"],
   [/\b0\d{1,2}[-.\s]\d{3,4}[-.\s]\d{4}\b/, "전화번호"],
   [/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/, "이메일"],
@@ -44,8 +45,10 @@ export function checkQuestion(raw: unknown): { ok: true; text: string } | { ok: 
   if (text.length > MAX_QUESTION_LENGTH) {
     return { ok: false, message: `질문은 ${MAX_QUESTION_LENGTH}자 이내로 입력해 주세요` };
   }
+  // 전각 숫자·공백 끼워 넣기·한글 숫자("공일공")로 가린 개인정보도 잡는다
+  const compact = text.normalize("NFKC").replace(/[\s._-]/g, "");
   for (const [re, label] of PII_PATTERNS) {
-    if (re.test(text)) {
+    if (re.test(text) || re.test(text.normalize("NFKC")) || re.test(compact)) {
       return { ok: false, message: `${label} 형태의 내용이 있어 보낼 수 없습니다. 개인정보는 지우고 다시 입력해 주세요` };
     }
   }
@@ -53,18 +56,31 @@ export function checkQuestion(raw: unknown): { ok: true; text: string } | { ok: 
 }
 
 /** 다른 사람의 개인정보·여비 금액을 묻는 질문인지 (이름+호칭, "다른 직원" 등 + 금액·정보 단어) */
+const NOT_A_NAME = new Set(["저는", "제가", "나는", "내가", "저희", "우리", "본인", "팀장", "과장", "부장", "차장", "대리", "사원", "직원"]);
+
 export function isThirdPartyQuestion(q: string): boolean {
-  const who =
-    /(다른\s*(교육생|직원|사람|분)|타인|남의|동료|팀원|옆\s*자리|(?!교육생|운영자|담당자|직원|임원|교육)[가-힣]{2,4}\s*(씨|님|과장|부장|차장|대리|사원|팀장))/;
+  const who = /(다른\s*(교육생|직원|사람|분)|타인|남의|동료|팀원|옆\s*자리)/;
   const what = /(여비|출장비|교통비|숙박비|식비|금액|얼마|받았|받은|지급액|연락처|전화|주소|개인\s*정보|성적|평가)/;
-  return who.test(q) && what.test(q);
+  if (!what.test(q)) return false;
+  if (who.test(q)) return true;
+  // "김철수 과장님"처럼 이름+호칭. "저는 대리인데"·"팀장님 숙박비 상한" 같은 본인·직급 질문은 제외한다
+  for (const m of q.matchAll(/([가-힣]{2,4})\s*(씨|님|과장|부장|차장|대리|사원|팀장)/g)) {
+    const name = m[1];
+    if (NOT_A_NAME.has(name) || /[는은가이도를을의]$/.test(name) || /(교육생|운영자|담당자|임원|교육)$/.test(name)) continue;
+    return true;
+  }
+  return false;
 }
 
 // ── 답변 후처리 ──────────────────────────────────────────────────────────────────────
 /** 문장 단위로 잘라 최대 n개만 남긴다 */
 export function limitSentences(text: string, n = MAX_SENTENCES): string {
-  const flat = text.replace(/\s+/g, " ").trim();
-  const sentences = flat.split(/(?<=[.!?。])\s+/).filter((s) => s.length > 0);
+  const flat = text.replace(/[ \t]+/g, " ").trim();
+  // 줄바꿈·목록(한 줄에 한 항목)도 문장 경계로 본다
+  const sentences = flat
+    .split(/(?<=[.!?。])\s+|\s*\n+\s*/)
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
   return sentences.slice(0, n).join(" ");
 }
 
@@ -84,6 +100,13 @@ function paragraphExists(article: string, base: string, document: string, retrie
   const mark = CIRCLED[Number(m[1]) - 1];
   if (!mark) return false;
   return retrieved.some((c) => c.document === document && baseArticle(c.article) === base && c.text.includes(mark));
+}
+
+/** 답변 속 금액(네 자리 이상 숫자)이 모두 검색된 규정 본문에 있는지 */
+export function amountsGrounded(answer: string, retrieved: Chunk[]): boolean {
+  const source = retrieved.map((c) => c.text).join("\n").replace(/,/g, "");
+  const nums = (answer.match(/\d[\d,]*/g) ?? []).map((n) => n.replace(/,/g, "")).filter((n) => n.length >= 4);
+  return nums.every((n) => source.includes(n));
 }
 
 /** 모델 응답을 검증한다: 검색된 조항에 실제로 있는 근거가 하나도 없으면 "확인되지 않음"으로 바꾼다 */
@@ -108,6 +131,7 @@ export function finalizeAnswer(parsed: ModelAnswer, retrieved: Chunk[]): AskResu
   if (refs.length === 0) return notFound;
 
   const answer = limitSentences(parsed.answer);
+  if (!amountsGrounded(answer, retrieved)) return notFound; // 규정 발췌에 없는 금액이 들어 있으면 쓰지 않는다
   return { answer, refs: refs.slice(0, 6), found: true, refused: false };
 }
 
@@ -132,7 +156,8 @@ function buildUserPrompt(question: string, chunks: Chunk[]): string {
   const excerpt = chunks
     .map((c) => `--- ${c.document} ${c.article}${c.title && c.title !== c.article ? `(${c.title})` : ""} ---\n${c.text}`)
     .join("\n\n");
-  return `[규정 발췌]\n${excerpt}\n\n[질문]\n${question}`;
+  // 질문은 JSON 문자열로 감싸서 "[규정 발췌]" 같은 가짜 구분선을 끼워 넣어도 데이터로만 읽히게 한다
+  return `[규정 발췌]\n${excerpt}\n\n[질문(JSON 문자열)]\n${JSON.stringify(question)}`;
 }
 
 // ── 진입점 ───────────────────────────────────────────────────────────────────────────

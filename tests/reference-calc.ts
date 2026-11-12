@@ -88,7 +88,7 @@ export function referenceCalc(input: CalculationInput, lookups: Lookups): Refere
   if (!course) throw new Error(`없는 교육 과정: ${input.courseId}`);
 
   const days = countDays(course.startDate, course.endDate);
-  const city = (sido: string, sg: string) => (/(특별시|광역시|특별자치시)$/.test(sido) ? sido : sido + "|" + sg.split(" ")[0]);
+  const city = (sido: string, sg: string) => (/(특별시|광역시|특별자치시)$/.test(sido) ? (/군$/.test(sg) ? sido + "|" + sg : sido) : sido + "|" + sg.split(" ")[0]);
   const sameZone = (leg: LegInput) =>
     city(leg.sido, leg.sigungu) === city(course.venueSido, course.venueSigungu);
 

@@ -30,7 +30,7 @@ const baseSchema = z.object({
     .int("숙박 박수는 정수로 입력해 주세요")
     .min(0, "숙박 박수는 0 이상이어야 합니다")
     .max(60, "숙박 박수가 너무 큽니다"),
-  lodgingActuals: z.array(money).optional(),
+  lodgingActuals: z.array(money).max(61).optional(),
 });
 
 export const calculationInputSchema = baseSchema.superRefine((v, ctx) => {
@@ -43,7 +43,7 @@ export const calculationInputSchema = baseSchema.superRefine((v, ctx) => {
   for (const key of ["outbound", "inbound"] as const) {
     const leg = v[key];
     const place = key === "outbound" ? "출발지" : "귀가지";
-    const sigunguList = SIGUNGU[leg.sido];
+    const sigunguList = Object.hasOwn(SIGUNGU, leg.sido) ? SIGUNGU[leg.sido] : undefined;
     if (!sigunguList) {
       ctx.addIssue({ code: "custom", path: [key, "sido"], message: `${place} 시·도를 목록에서 선택해 주세요` });
     } else if (!sigunguList.includes(leg.sigungu)) {
@@ -67,6 +67,9 @@ export const calculationInputSchema = baseSchema.superRefine((v, ctx) => {
   }
 
   // 숙소를 제공하는 과정이 아니면 박별 숙박비 실비가 박수만큼 필요
+  if (!course.lodgingProvided && v.lodgingActuals && v.lodgingActuals.length > v.nights) {
+    ctx.addIssue({ code: "custom", path: ["lodgingActuals"], message: `박별 숙박비 실비는 ${v.nights}박만큼만 입력해 주세요` });
+  }
   if (!course.lodgingProvided && v.nights > 0) {
     const actuals = v.lodgingActuals;
     if (!actuals || actuals.length !== v.nights) {

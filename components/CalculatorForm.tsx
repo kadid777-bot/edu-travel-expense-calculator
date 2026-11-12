@@ -5,6 +5,7 @@ import { useState } from "react";
 import { SIDO_LIST, SIGUNGU } from "../data/sigungu";
 import { countDays } from "../lib/calc/days";
 import type { CalculationResult, Course, TransportMode } from "../lib/calc/types";
+import EvidenceUpload from "./EvidenceUpload";
 import ExplainPanel from "./ExplainPanel";
 import ResultCard, { type ResultMeta } from "./ResultCard";
 
@@ -350,6 +351,8 @@ export default function CalculatorForm({ courses }: { courses: Course[] }) {
           </p>
         )}
 
+        <EvidenceUpload />
+
         <button
           type="submit"
           disabled={loading}
@@ -362,7 +365,7 @@ export default function CalculatorForm({ courses }: { courses: Course[] }) {
       {result && meta && (
         <div className="space-y-4">
           <ResultCard result={result} meta={meta} />
-          <ExplainPanel key={meta.fetchedAt} result={result} />
+          <ExplainPanel key={meta.fetchedAt} result={result} signature={meta.signature ?? ""} />
         </div>
       )}
     </div>

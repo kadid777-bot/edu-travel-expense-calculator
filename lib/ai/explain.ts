@@ -14,7 +14,7 @@ const itemSchema = z.object({
   excess: z.number().optional(),
   refs: z.array(z.object({ document: z.string().max(20), article: z.string().max(200) })).max(10),
   notes: z.array(z.string().max(400)).max(20),
-  calcValues: z.record(z.string().max(40), z.number()).optional(),
+  calcValues: z.record(z.string().max(40), z.number()).refine((o) => Object.keys(o).length <= 12).optional(),
 });
 
 export const resultSchema = z.object({

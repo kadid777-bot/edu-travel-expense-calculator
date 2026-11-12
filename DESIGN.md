@@ -672,8 +672,43 @@ PLAN.md의 작업 1~31 순서를 그대로 따른다.
 
 ---
 
+## 12. 구현 반영 사항 (설계와 달라진 점, 2026-11-12)
+
+*코드가 설계 문서보다 앞서 나간 부분을 한곳에 모아 적는다. 위 본문과 다르면 이 절이 최신이다.*
+
+### 12.1 API·오류 처리
+- `/api/calculate` 응답에 `meta`가 붙는다: `{ mockLookups, fetchedAt, notes, signature }`. `signature`는 결과 JSON의 HMAC 서명이고, `/api/explain`은 이 서명이 맞는 결과만 받는다(조작된 결과·자유 문장이 AI로 가는 것을 막는다). 서명 비밀값은 `RESULT_SIGNING_SECRET`(없으면 `OPENAI_API_KEY`에서 파생).
+- `CalculationResult`에 `notices`(예: 시내 출장 안내)가 있다. `/api/explain` 요청은 `{ result, signature }`이다.
+- `/api/explain`은 AI 호출이 실패해도 502가 아니라 **200 + 정해진 문장(`usedAi:false`)** 을 돌려준다(계산 결과 설명이 화면에서 끊기지 않게 하려는 결정). `/api/ask`만 502 `AI_UNAVAILABLE`을 쓴다.
+- 모든 POST API 입구 검사(`lib/security/guard.ts`): JSON이 아니면 `415`, `Sec-Fetch-Site`가 다른 사이트이거나 `Origin`이 우리 주소가 아니면 `403`.
+- `429 RATE_LIMITED`: IP당 10분 20회(ask·explain)·60회(calculate)·12회(batch), 서버 전체 하루 상한(AI 1,500 / 계산 5,000 / 일괄 400). 서버 메모리 방식이라 서버가 새로 뜨면 초기화되는 최선 노력이다. 운영 시에는 공유 저장소(KV)나 Vercel WAF로 대체한다.
+- `404 COURSE_NOT_FOUND`는 `details.fieldErrors.courseId`를 함께 돌려줘 과정 선택 칸을 강조한다. `/api/ask`·`/api/explain`의 500은 서버에 오류 이름만 기록한다(질문 내용은 기록하지 않는다).
+
+### 12.2 계산·조회 규칙
+- **시내 판정은 시·군 단위**(여비세칙 제12조): 특별시·광역시·특별자치시는 구가 달라도 같은 시, 단 광역시 안의 군(기장군·달성군·강화군·옹진군·울주군)은 별도 시·군. 도는 `○○시`/`○○군` 기준(구는 무시). 구현 위치 `lib/calc/zone.ts`.
+- 열차요금을 정할 수 없을 때 이유를 구분해 경고한다(`LegLookup.fareReason`): 대응 역 없음 / 두 지역의 대표 철도역이 같음 / 조회 결과 없음(직통 열차 없음 포함). 어느 경우든 금액을 지어내지 않고 교통비 인정을 보류한다.
+- 열차요금 조회일: 교육일이 오늘로부터 30일 이내면 교육일(가는 편=시작일, 오는 편=종료일)로, 그보다 멀면 시간표가 아직 없어 곧바로 '내일'로 조회한다(구간당 외부 호출 1번). 대체 조회는 결과 화면에 안내한다.
+- `lodgingActuals`는 `nights`보다 길면 입력 검사에서 거절하고, 엔진은 `nights`개까지만 본다.
+
+### 12.3 AI 안전장치 추가
+- 질문은 JSON 문자열로 감싸 프롬프트에 넣고, 답변 속 금액(네 자리 이상 숫자)이 검색된 규정 본문에 없으면 "규정에서 확인되지 않습니다"로 바꾼다.
+- 개인정보 차단은 전각 숫자·공백/하이픈 끼워 넣기·한글 숫자(공일공…)도 잡는다. 타인 질문 판정은 "저는 대리인데…"·"팀장님 숙박비 상한은?" 같은 본인·직급 질문을 거절하지 않는다. 5문장 제한은 줄바꿈 목록도 문장으로 센다.
+
+### 12.4 nice 기능 (구현됨)
+- 운영자 일괄 산출: `/operator`, `POST /api/calculate-batch`(호출당 25명, 전체 110명, 동시 외부 호출 8개). 입력은 **엑셀 대신 표 붙여넣기 또는 CSV 파일**(엑셀에서 'CSV로 저장'), 결과도 CSV(엑셀에서 열림)로 내려받는다. 이름은 브라우저에만 두고 서버에는 `rowNo`만 보낸다. 별도 로그인은 없다(주소를 공개하지 않는 운영 가정) — 공개 배포 시 접근 제한이 필요하다.
+- 증빙 사진 미리보기(`EvidenceUpload`): 브라우저 화면에서만 보여주고 서버로 보내지 않는다. FAQ(`FaqList`): 금액은 `data/rules.ts`에서 가져온다.
+- 보안 헤더(`next.config.ts`): CSP, `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`.
+
+### 12.5 이름·구성 차이
+- 파일: `rules-apply.ts`·`fetch-with-timeout.ts` 대신 `lib/calc/{types,days,zone,batch}.ts`, `lib/external/{http,lookups}.ts`, `lib/security/guard.ts`. 함수 이름: `getDrivingDistanceKm`, `getGasolinePrice`, `getRailFareCap`(버스 요금 함수는 없다: 버스 상한도 열차요금). 컴포넌트: `ExplainButton` → `ExplainPanel`.
+- OpenAI는 SDK 없이 `fetch`로 호출한다(`lib/ai/openai.ts`, 25초 제한). 연습용 교육 과정은 6개이고 화면은 `COURSES`를 직접 읽는다(`/api/courses`는 보조). 환경변수 `MOCK_EXTERNAL=1`은 화면 확인용 가상 요금(설계 §10.2에 없던 값), `RESULT_SIGNING_SECRET`은 선택.
+- 기준표 `shortDistance.lodgingAllowed`·`skipExternalLookup`, `dailyReduction`은 엔진이 쓰지 않는 예비 값이다(시내 구간 조회 생략은 `isLocalLeg`로 직접 처리).
+
+---
+
 ## 버전 기록
 
 | 버전 | 날짜 | 변경 | 작성자 |
 |---|---|---|---|
 | 0.1 | 2026-11-12 | 최초 작성 (PLAN.md 기반, 선택안 C) | 양지윤 |
+| 0.2 | 2026-11-12 | 구현 반영 사항 §12 추가 (보안 보강·시내 판정 시·군·nice 기능·이름 차이) | 양지윤 |

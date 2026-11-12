@@ -64,6 +64,17 @@ export interface RailFare {
  * 두 지역 사이 열차요금 상한(가장 높은 일반실 요금)을 구한다. 대응 역이 없거나 같은 역이거나 조회 실패면 null.
  * 교육일이 TAGO 시간표 제공 범위(대략 한 달 안팎)를 넘어서면 결과가 비어서, 내일 날짜로 한 번 더 시도한다.
  */
+/** 두 지역의 철도역 대응 상태: 문제가 없으면 null */
+export function railStationIssue(
+  from: { sido: string; sigungu: string },
+  to: { sido: string; sigungu: string },
+): "no-station" | "same-station" | null {
+  const dep = findStations(from.sido, from.sigungu);
+  const arr = findStations(to.sido, to.sigungu);
+  if (!dep.railId || !arr.railId) return "no-station";
+  return dep.railId === arr.railId ? "same-station" : null;
+}
+
 export async function getRailFareCap(
   from: { sido: string; sigungu: string },
   to: { sido: string; sigungu: string },
@@ -74,10 +85,14 @@ export async function getRailFareCap(
   if (!dep.railId || !arr.railId || dep.railId === arr.railId) return null;
 
   const wanted = toYmd(isoDate);
-  const exact = await fareOnDate(dep.railId, arr.railId, wanted);
-  if (exact !== null) return { fare: exact, refDate: wanted, substituted: false };
+  const today = new Date().toISOString().slice(0, 10).replaceAll("-", "");
+  // 시간표 제공 범위(약 한 달)를 넘는 날짜는 거의 빈 결과라 처음부터 건너뛴다(구간당 외부 호출 1번)
+  if (wanted <= addDays(today, 30)) {
+    const exact = await fareOnDate(dep.railId, arr.railId, wanted);
+    if (exact !== null) return { fare: exact, refDate: wanted, substituted: false };
+  }
 
-  const tomorrow = addDays(new Date().toISOString().slice(0, 10).replaceAll("-", ""), 1);
+  const tomorrow = addDays(today, 1);
   if (tomorrow === wanted) return null;
   const alt = await fareOnDate(dep.railId, arr.railId, tomorrow);
   return alt !== null ? { fare: alt, refDate: tomorrow, substituted: true } : null;

@@ -7,7 +7,7 @@ import { isLocalLeg } from "../calc/zone";
 import { runLimited } from "./http";
 import { getDrivingDistanceKm } from "./naver-maps";
 import { getGasolinePrice } from "./opinet";
-import { getRailFareCap } from "./tago";
+import { getRailFareCap, railStationIssue } from "./tago";
 
 export interface LookupResult {
   lookups: Lookups;
@@ -76,8 +76,10 @@ export async function getLookups(input: CalculationInput): Promise<LookupResult>
     const idx = l.leg === input.outbound ? 0 : 1;
     const list: (() => Promise<void>)[] = [
       async () => {
-        const rail = await getRailFareCap(l.from, l.to, l.date);
+        const issue = railStationIssue(l.from, l.to);
+        const rail = issue ? null : await getRailFareCap(l.from, l.to, l.date);
         out[idx].fare = rail ? rail.fare : null;
+        out[idx].fareReason = rail ? null : (issue ?? "not-found");
         if (rail?.substituted) {
           notes.push(`열차요금은 교육일(${l.date})의 시간표가 아직 없어 ${rail.refDate} 기준으로 조회했습니다`);
         }

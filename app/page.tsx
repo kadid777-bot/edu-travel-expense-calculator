@@ -1,5 +1,6 @@
 import AskBox from "../components/AskBox";
 import CalculatorForm from "../components/CalculatorForm";
+import FaqList from "../components/FaqList";
 import { COURSES } from "../data/courses";
 
 export default function Home() {
@@ -14,6 +15,7 @@ export default function Home() {
       <div className="space-y-12">
         <CalculatorForm courses={COURSES} />
         <AskBox />
+        <FaqList />
       </div>
     </main>
   );

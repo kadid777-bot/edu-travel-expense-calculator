@@ -61,6 +61,8 @@ export interface ExpenseItem {
 export interface LegLookup {
   /** 근무지~교육장소 구간 열차요금(일반실, 편도). 열차·버스·자차·항공 모두의 상한 */
   fare: number | null;
+  /** fare가 null인 이유: 대응 역 없음 / 두 지역의 대표역이 같음 / 조회 결과 없음(직통 열차 없음 포함) */
+  fareReason?: "no-station" | "same-station" | "not-found" | null;
   /** 자차 연료비 계산용 편도 거리(km) */
   distanceKm?: number | null;
   /** 출장 당일(가는 편=교육 시작일, 오는 편=종료일) 보통휘발유 전국 평균 판매가격(원/L) */

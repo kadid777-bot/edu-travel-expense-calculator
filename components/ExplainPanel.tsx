@@ -10,7 +10,7 @@ interface Explanation {
   fallback: boolean;
 }
 
-export default function ExplainPanel({ result }: { result: CalculationResult }) {
+export default function ExplainPanel({ result, signature }: { result: CalculationResult; signature: string }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [items, setItems] = useState<Explanation[] | null>(null);
@@ -22,7 +22,7 @@ export default function ExplainPanel({ result }: { result: CalculationResult }) 
       const res = await fetch("/api/explain", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ result }),
+        body: JSON.stringify({ result, signature }),
       });
       const json = await res.json();
       if (!res.ok) {

@@ -7,6 +7,8 @@ export interface ResultMeta {
   fetchedAt: string;
   /** 조회 조건 안내 (예: 유가 기준일) */
   notes?: string[];
+  /** 서버가 붙인 서명 (설명 요청에 그대로 돌려보낸다) */
+  signature?: string;
 }
 
 function formatTime(iso: string): string {

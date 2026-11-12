@@ -231,7 +231,7 @@ describe("POST /api/calculate (L1)", () => {
     lodgingActuals: [75_000, 75_000],
   };
   const call = (payload: unknown) =>
-    POST(new Request("http://localhost/api/calculate", { method: "POST", body: JSON.stringify(payload) }));
+    POST(new Request("http://localhost/api/calculate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }));
 
   it("정상 입력: 200, 항목 5개, 근거 조항, 가상 조회 표시", async () => {
     const res = await call(body);
@@ -259,7 +259,7 @@ describe("POST /api/calculate (L1)", () => {
   });
 
   it("JSON이 아니면 400", async () => {
-    const res = await POST(new Request("http://localhost/api/calculate", { method: "POST", body: "not json" }));
+    const res = await POST(new Request("http://localhost/api/calculate", { method: "POST", headers: { "Content-Type": "application/json" }, body: "not json" }));
     expect(res.status).toBe(400);
   });
 });
