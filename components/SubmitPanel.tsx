@@ -14,7 +14,7 @@ interface Picked {
   file: File;
 }
 
-const inputCls = "w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-base dark:border-zinc-700 dark:bg-zinc-900";
+const inputCls = "w-full rounded-2xl border border-[var(--md-outline-variant)] bg-[var(--md-lowest)] px-3 py-2 text-base";
 const ACCEPT = Object.keys(ALLOWED_TYPES).join(",");
 const mb = (n: number) => `${(n / 1024 / 1024).toFixed(1)}MB`;
 
@@ -116,7 +116,7 @@ export default function SubmitPanel({ input, result, meta }: { input: unknown; r
 
   if (receipt) {
     return (
-      <section aria-label="제출 완료" className="space-y-2 rounded-xl border border-emerald-400 bg-emerald-50 p-4 text-emerald-950 dark:border-emerald-700 dark:bg-emerald-950 dark:text-emerald-100">
+      <section aria-label="제출 완료" className="space-y-2 rounded-3xl border border-emerald-400 bg-emerald-50 p-4 text-emerald-950 dark:border-emerald-700 dark:bg-emerald-950 dark:text-emerald-100">
         <h2 className="text-xl font-semibold tracking-tight">제출했어요</h2>
         <p>
           접수 번호 <strong className="text-2xl tabular-nums tracking-wider">{receipt}</strong>
@@ -127,9 +127,9 @@ export default function SubmitPanel({ input, result, meta }: { input: unknown; r
   }
 
   return (
-    <section aria-label="제출하기" className="space-y-4 rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
+    <section aria-label="제출하기" className="space-y-4 rounded-3xl border border-[var(--md-outline-variant)] p-4">
       <h2 className="text-xl font-semibold tracking-tight">④ 운영자에게 제출하기</h2>
-      <p className="text-sm text-zinc-600 dark:text-zinc-400">
+      <p className="text-sm text-[var(--md-on-surface-variant)]">
         위 산출 내역과 증빙(하이패스·숙박비·교통비 영수증 등)을 운영자에게 보내요. 영수증에 보이는 카드번호·주민등록번호는 가려서 올려 주세요.
       </p>
 
@@ -154,14 +154,14 @@ export default function SubmitPanel({ input, result, meta }: { input: unknown; r
           <label htmlFor="sub-kind" className="text-sm">
             종류
           </label>
-          <select id="sub-kind" className="rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-900" value={kind} onChange={(e) => setKind(e.target.value as FileKind)}>
+          <select id="sub-kind" className="rounded-2xl border border-[var(--md-outline-variant)] bg-[var(--md-lowest)] px-2 py-1.5 text-sm" value={kind} onChange={(e) => setKind(e.target.value as FileKind)}>
             {FILE_KINDS.map((k) => (
               <option key={k} value={k}>
                 {FILE_KIND_LABEL[k]}
               </option>
             ))}
           </select>
-          <label className="lift cursor-pointer rounded-full border border-zinc-400 px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800">
+          <label className="lift cursor-pointer rounded-full border border-[var(--md-outline-variant)] px-3 py-1.5 text-sm hover:bg-[var(--md-container-high)]">
             파일 선택
             <input
               type="file"
@@ -179,7 +179,7 @@ export default function SubmitPanel({ input, result, meta }: { input: unknown; r
         {files.length > 0 && (
           <ul className="space-y-1 text-sm">
             {files.map((f) => (
-              <li key={f.key} className="flex items-center justify-between gap-2 rounded-lg bg-zinc-100 px-3 py-1.5 dark:bg-zinc-800">
+              <li key={f.key} className="flex items-center justify-between gap-2 rounded-2xl bg-[var(--md-container-high)] px-3 py-1.5">
                 <span className="truncate">
                   <strong>{FILE_KIND_LABEL[f.kind]}</strong> · {f.file.name} ({mb(f.file.size)})
                 </span>
@@ -198,7 +198,7 @@ export default function SubmitPanel({ input, result, meta }: { input: unknown; r
       </label>
 
       {error && (
-        <p role="alert" className="rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-900 dark:border-red-800 dark:bg-red-950 dark:text-red-200">
+        <p role="alert" className="rounded-2xl border border-red-300 bg-red-50 p-3 text-sm text-red-900 dark:border-red-800 dark:bg-red-950 dark:text-red-200">
           {error}
         </p>
       )}
@@ -206,7 +206,7 @@ export default function SubmitPanel({ input, result, meta }: { input: unknown; r
         type="button"
         onClick={submit}
         disabled={busy}
-        className="lift w-full rounded-full bg-black px-4 py-3 text-base font-medium text-white disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900"
+        className="lift w-full rounded-full bg-[var(--md-primary)] px-4 py-3 text-base font-medium text-[var(--md-on-primary)] disabled:opacity-60"
       >
         {busy ? step || "제출하는 중…" : "제출하기"}
       </button>

@@ -9,7 +9,7 @@ import CourseFields, { EMPTY_COURSE } from "../CourseFields";
 import BatchTable from "./BatchTable";
 import type { BatchOutcome } from "./types";
 
-const inputCls = "w-full rounded border border-zinc-400 bg-transparent px-3 py-2 text-sm dark:border-zinc-600";
+const inputCls = "w-full rounded-2xl border border-[var(--md-outline-variant)] bg-transparent px-3 py-2 text-sm";
 
 export default function BatchUpload() {
   // 교육 장소·기간은 직접 입력한다 (자주 쓰는 장소 3곳은 고르면 자동으로 채워진다)
@@ -100,13 +100,13 @@ export default function BatchUpload() {
           <button
             type="button"
             onClick={downloadTemplate}
-            className="rounded border border-zinc-400 px-2 py-1 text-xs hover:bg-zinc-100 dark:hover:bg-zinc-800"
+            className="rounded-full border border-[var(--md-outline-variant)] px-2 py-1 text-xs hover:bg-[var(--md-container-high)]"
           >
             양식 내려받기(CSV)
           </button>
           <input type="file" accept=".csv,.tsv,.txt,text/csv" onChange={onFile} className="text-xs" aria-label="명단 파일 올리기" />
         </div>
-        <p className="text-xs text-zinc-600 dark:text-zinc-400">
+        <p className="text-xs text-[var(--md-on-surface-variant)]">
           엑셀에서 표를 복사해 붙여넣거나, 엑셀을 &apos;CSV&apos;로 저장해 올리세요. 한 줄에 한 명이고 칸은 {CSV_HEADER.join(" · ")} 순서예요.
           이름은 이 브라우저에서만 쓰고 서버로 보내지 않아요. 한 번에 최대 {MAX_PEOPLE}명이고 서버에는 {CHUNK_SIZE}명씩 나눠 보내요.
         </p>
@@ -140,7 +140,7 @@ export default function BatchUpload() {
           type="button"
           disabled={busy}
           onClick={() => start()}
-          className="rounded bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900"
+          className="rounded-full bg-[var(--md-primary)] px-4 py-2 text-sm font-medium text-[var(--md-on-primary)] disabled:opacity-50"
         >
           {busy ? "계산 중…" : "일괄 산출"}
         </button>
@@ -153,7 +153,7 @@ export default function BatchUpload() {
           <button
             type="button"
             onClick={() => start(failedChunks)}
-            className="rounded border border-red-500 px-3 py-1.5 text-sm text-red-600"
+            className="rounded-full border border-red-500 px-3 py-1.5 text-sm text-red-600"
           >
             실패한 {failedChunks.length}묶음 다시 시도
           </button>

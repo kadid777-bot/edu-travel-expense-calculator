@@ -1,71 +1,151 @@
 @import "tailwindcss";
 
-/* 디자인 토큰: 흑백 에디토리얼 톤 (종이색 #dadada 위에 검정 영역, 흰 선은 14~28% 투명도) */
+/* 디자인 토큰: Material 3 Expressive 느낌 — 아주 연한 라벤더 흰색 바탕, 분홍빛 톤 컨테이너, 큰 둥근 모서리, 알약 버튼 */
 :root {
-  --background: #dadada; /* paper */
-  --foreground: #111111; /* ink */
-  --panel: #f4f4f4;
-  --black: #000000;
-  --text-on-black: #f4f4f4;
-  --grey-fill: #6f6f6f;
-  --hairline: rgba(255, 255, 255, 0.28);
-  /* 1440px 도화지 기준 단위: u = min(100vw / 1440, 1.333px), 휴대폰(≤760px)은 100vw / 390 */
-  --u: min(calc(100vw / 1440), 1.333px);
-}
-
-@media (max-width: 760px) {
-  :root {
-    --u: calc(100vw / 390);
-  }
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-inter-tight);
-  --font-display: var(--font-archivo);
+  --md-surface: #fefbff;
+  --md-on-surface: #1c1b1d;
+  --md-on-surface-variant: #4a454b;
+  --md-lowest: #ffffff;
+  --md-container-low: #f8f1f6; /* 큰 컨테이너(히어로·도구 영역) */
+  --md-container: #f3ecf0;
+  --md-container-high: #ede5ea;
+  --md-primary: #8c4a7a;
+  --md-on-primary: #ffffff;
+  --md-primary-container: #ffd8ee;
+  --md-on-primary-container: #3a0b2f;
+  --md-secondary-container: #ebdde8;
+  --md-tertiary-container: #ffdbcf; /* 복숭아 */
+  --md-tertiary-blue: #e3e0ff; /* 라벤더 */
+  --md-outline: #7d747c;
+  --md-outline-variant: #d1c3cd;
+  /* 기존 코드가 쓰는 이름 (본문 색) */
+  --background: var(--md-surface);
+  --foreground: var(--md-on-surface);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-    --panel: #111111;
+    --md-surface: #151216;
+    --md-on-surface: #e8e0e5;
+    --md-on-surface-variant: #cfc3cd;
+    --md-lowest: #100d11;
+    --md-container-low: #1f1b1f;
+    --md-container: #272328;
+    --md-container-high: #322e33;
+    --md-primary: #f2b0da;
+    --md-on-primary: #4a1d3e;
+    --md-primary-container: #6b3359;
+    --md-on-primary-container: #ffd8ee;
+    --md-secondary-container: #4d4250;
+    --md-tertiary-container: #5a3a30;
+    --md-tertiary-blue: #3f3d6b;
+    --md-outline: #978e96;
+    --md-outline-variant: #4d444b;
   }
 }
 
+@theme inline {
+  --color-background: var(--md-surface);
+  --color-foreground: var(--md-on-surface);
+  --font-sans: var(--font-google-sans);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-inter-tight), "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+  background: var(--md-surface);
+  color: var(--md-on-surface);
+  font-family: var(--font-google-sans), system-ui, "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+  font-weight: 400;
+}
+
+a {
+  color: inherit;
+}
+
+/* 제목은 가변 글꼴의 475~500 굵기, 크게 */
+h1,
+h2,
+h3 {
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+button {
   font-weight: 500;
 }
 
-/* 제목·라벨: 넓은 가로폭의 Archivo */
-.display {
-  font-family: var(--font-archivo), "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
-  font-stretch: 104%;
-  font-variation-settings: "wdth" 104;
-  font-weight: 640;
-  line-height: 0.86;
-  letter-spacing: -0.06em;
+/* 알약 버튼 */
+.md-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 48px;
+  border-radius: 9999px;
+  padding: 0 1.5rem;
+  font-weight: 500;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.md-btn-filled {
+  background: var(--md-primary);
+  color: var(--md-on-primary);
+}
+.md-btn-tonal {
+  background: var(--md-secondary-container);
+  color: var(--md-on-surface);
+}
+.md-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.16);
 }
 
-.bar-label {
-  font-family: var(--font-archivo), "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
-  font-variation-settings: "wdth" 118;
-  font-stretch: 118%;
-  font-weight: 600;
-  font-size: calc(14 * var(--u));
-  letter-spacing: 0.02em;
-}
-
-/* 버튼이 살짝 떠오르는 호버 */
 .lift {
   transition: transform 0.2s ease;
 }
 .lift:hover {
   transform: translateY(-1px);
+}
+
+/* 입력칸·선택칸: 둥근 모서리, 포커스 때 기본색 테두리 */
+input[type="text"],
+input[type="number"],
+input[type="date"],
+input[type="password"],
+input:not([type]),
+select,
+textarea {
+  border-radius: 16px;
+}
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--md-primary);
+  outline-offset: 1px;
+}
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--md-primary);
+  outline-offset: 2px;
+}
+
+/* 크기 (1440 도화지 기준 u, 휴대폰은 390 기준) */
+:root {
+  --u: min(calc(100vw / 1440), 1.333px);
+}
+@media (max-width: 760px) {
+  :root {
+    --u: calc(100vw / 390);
+  }
+}
+.hero-title {
+  font-size: clamp(2.1rem, 7vw, 5.5rem);
+  word-break: keep-all; /* 한글 단어가 중간에서 끊기지 않게 */
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  font-weight: 500;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -75,40 +155,5 @@ body {
     transition: none !important;
     animation: none !important;
     scroll-behavior: auto !important;
-  }
-}
-
-/* 화면 크기별 크기 (데스크톱: 1440 도화지의 u, 휴대폰: 390 기준 u) */
-.hero-pad {
-  padding-top: calc(48 * var(--u));
-  padding-bottom: calc(72 * var(--u));
-}
-.hero-title {
-  font-size: calc(72 * var(--u));
-  /* 한 줄로 보이게 하고, 한글은 Archivo에 없어 대체 글꼴로 그려지므로 자간을 넉넉히 */
-  white-space: nowrap;
-  line-height: 1.05;
-  letter-spacing: -0.045em;
-}
-.hero-gap {
-  margin-top: calc(96 * var(--u));
-}
-.tool-pad-bottom {
-  padding-bottom: calc(150 * var(--u));
-}
-
-@media (max-width: 760px) {
-  .hero-pad {
-    padding-top: calc(20 * var(--u));
-    padding-bottom: calc(40 * var(--u));
-  }
-  .hero-title {
-    font-size: min(calc(27 * var(--u)), 46px);
-  }
-  .hero-gap {
-    margin-top: calc(40 * var(--u));
-  }
-  .tool-pad-bottom {
-    padding-bottom: calc(60 * var(--u));
   }
 }

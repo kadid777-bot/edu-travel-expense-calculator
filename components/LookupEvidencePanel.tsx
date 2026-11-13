@@ -18,13 +18,13 @@ function RailTable({ leg }: { leg: LegEvidence }) {
       <p className="text-sm">
         <strong>{leg.label}</strong> · {leg.from} → {leg.to}
       </p>
-      <p className="text-xs text-zinc-600 dark:text-zinc-400">
+      <p className="text-xs text-[var(--md-on-surface-variant)]">
         상한이 된 구간 {rail.depStation}역 → {rail.arrStation}역 · 조회일 {ymd(rail.refDate)}
         {rail.substituted && " (교육일의 시간표가 아직 없어 가까운 날로 대신 조회)"}
       </p>
       {rail.routes.length > 1 && (
         <table className="w-full max-w-sm text-sm">
-          <caption className="mb-1 text-left text-xs text-zinc-600 dark:text-zinc-400">
+          <caption className="mb-1 text-left text-xs text-[var(--md-on-surface-variant)]">
             이용할 수 있는 역별 최고 요금 (서울은 서울역·용산역·수서역을 모두 비교해요)
           </caption>
           <tbody>
@@ -42,7 +42,7 @@ function RailTable({ leg }: { leg: LegEvidence }) {
       <table className="w-full max-w-sm text-sm">
         <caption className="sr-only">열차 종류별 일반실 성인 요금</caption>
         <thead>
-          <tr className="border-b border-zinc-300 text-left dark:border-zinc-700">
+          <tr className="border-b border-[var(--md-outline-variant)] text-left">
             <th className="py-1 pr-3 font-medium">열차 종류</th>
             <th className="py-1 text-right font-medium">일반실 요금(성인, 편도)</th>
           </tr>
@@ -72,7 +72,7 @@ export default function LookupEvidencePanel({ evidence, fetchedAt }: { evidence:
   if (railLegs.length === 0 && carLegs.length === 0 && !evidence.gasoline) return null;
 
   return (
-    <details open className="rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
+    <details open className="rounded-3xl border border-[var(--md-outline-variant)] p-4">
       <summary className="cursor-pointer font-medium">한도 금액은 이렇게 나왔어요 (조회 근거 확인)</summary>
       <div className="mt-4 space-y-6">
         {railLegs.length > 0 && (
@@ -81,7 +81,7 @@ export default function LookupEvidencePanel({ evidence, fetchedAt }: { evidence:
             {railLegs.map((leg) => (
               <RailTable key={leg.label} leg={leg} />
             ))}
-            <p className="text-xs text-zinc-600 dark:text-zinc-400">
+            <p className="text-xs text-[var(--md-on-surface-variant)]">
               요금은 국토교통부 열차정보 조회값이에요. 실제 승차권 요금은{" "}
               <a className={linkCls} href={evidence.links.korail} target="_blank" rel="noopener noreferrer">
                 코레일
@@ -112,7 +112,7 @@ export default function LookupEvidencePanel({ evidence, fetchedAt }: { evidence:
                 </a>
               </p>
             )}
-            <p className="text-xs text-zinc-600 dark:text-zinc-400">
+            <p className="text-xs text-[var(--md-on-surface-variant)]">
               자차 교통비 = (거리 × 휘발유 가격 ÷ 연비) + 하이패스 실비이고, 위 철도 요금 상한을 넘으면 상한까지만 인정해요. 링크가
               열리지 않거나 경로가 다르면 지도에서 두 지역을 직접 검색해 비교해 보세요.
             </p>

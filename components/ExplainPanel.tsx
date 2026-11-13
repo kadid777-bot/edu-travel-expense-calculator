@@ -43,7 +43,7 @@ export default function ExplainPanel({ result, signature }: { result: Calculatio
         type="button"
         onClick={load}
         disabled={loading}
-        className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium hover:bg-zinc-100 disabled:opacity-60 dark:border-zinc-700 dark:hover:bg-zinc-800"
+        className="rounded-2xl border border-[var(--md-outline-variant)] px-4 py-2 text-sm font-medium hover:bg-[var(--md-container-high)] disabled:opacity-60"
       >
         {loading ? "설명을 만드는 중…" : "쉬운 말로 설명 보기"}
       </button>
@@ -55,7 +55,7 @@ export default function ExplainPanel({ result, signature }: { result: Calculatio
       )}
 
       {items && (
-        <ul className="space-y-2 rounded-xl border border-zinc-200 bg-white p-4 text-sm dark:border-zinc-800 dark:bg-zinc-900" aria-live="polite">
+        <ul className="space-y-2 rounded-3xl border border-[var(--md-outline-variant)] bg-[var(--md-lowest)] p-4 text-sm" aria-live="polite">
           {items.map((it) => (
             <li key={it.category}>
               <span className="font-medium">{it.category}</span> — {it.text}

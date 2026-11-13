@@ -147,7 +147,7 @@ export default function SubmissionList() {
   return (
     <div className="space-y-4">
       {old > 0 && (
-        <p role="status" className="rounded-lg border border-amber-400 bg-amber-50 p-3 text-sm text-amber-950 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100">
+        <p role="status" className="rounded-2xl border border-amber-400 bg-amber-50 p-3 text-sm text-amber-950 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100">
           제출한 지 30일이 지난 건이 {old}건 있어요. 정산이 끝났다면 영수증 개인정보가 남지 않도록 삭제해 주세요.
         </p>
       )}
@@ -161,21 +161,21 @@ export default function SubmissionList() {
         <label htmlFor="sub-search" className="sr-only">
           검색
         </label>
-        <input id="sub-search" placeholder="이름·사번·접수 번호·교육 장소 검색" className="min-w-0 flex-1 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900" value={q} onChange={(e) => setQ(e.target.value)} />
-        <button type="button" onClick={load} className="rounded-full border border-zinc-400 px-3 py-1.5 text-sm">
+        <input id="sub-search" placeholder="이름·사번·접수 번호·교육 장소 검색" className="min-w-0 flex-1 rounded-2xl border border-[var(--md-outline-variant)] bg-[var(--md-lowest)] px-3 py-2 text-sm" value={q} onChange={(e) => setQ(e.target.value)} />
+        <button type="button" onClick={load} className="rounded-full border border-[var(--md-outline-variant)] px-3 py-1.5 text-sm">
           새로고침
         </button>
       </div>
 
       <div className="flex flex-wrap items-center gap-2 text-sm">
         <span>선택 {ids.length}건</span>
-        <button type="button" disabled={ids.length === 0 || !!busy} onClick={exportCsv} className="rounded-full border border-zinc-400 px-3 py-1.5 disabled:opacity-50">
+        <button type="button" disabled={ids.length === 0 || !!busy} onClick={exportCsv} className="rounded-full border border-[var(--md-outline-variant)] px-3 py-1.5 disabled:opacity-50">
           산출 내역 CSV
         </button>
-        <button type="button" disabled={ids.length === 0 || !!busy} onClick={exportZip} className="rounded-full border border-zinc-400 px-3 py-1.5 disabled:opacity-50">
+        <button type="button" disabled={ids.length === 0 || !!busy} onClick={exportZip} className="rounded-full border border-[var(--md-outline-variant)] px-3 py-1.5 disabled:opacity-50">
           {busy === "zip" ? "묶는 중…" : "증빙 ZIP"}
         </button>
-        <button type="button" disabled={ids.length === 0 || !!busy} onClick={recompute} className="rounded-full border border-zinc-400 px-3 py-1.5 disabled:opacity-50">
+        <button type="button" disabled={ids.length === 0 || !!busy} onClick={recompute} className="rounded-full border border-[var(--md-outline-variant)] px-3 py-1.5 disabled:opacity-50">
           {busy === "recalc" ? "계산 중…" : "지금 요금으로 다시 계산"}
         </button>
         <button type="button" disabled={ids.length === 0 || !!busy} onClick={remove} className="rounded-full border border-red-500 px-3 py-1.5 text-red-700 disabled:opacity-50 dark:text-red-400">
@@ -184,7 +184,7 @@ export default function SubmissionList() {
       </div>
 
       {recalc && (
-        <div className="space-y-1 rounded-lg border border-zinc-300 p-3 text-sm dark:border-zinc-700">
+        <div className="space-y-1 rounded-2xl border border-[var(--md-outline-variant)] p-3 text-sm">
           <strong>다시 계산 결과 (제출값과 비교)</strong>
           {recalc.map((r) => (
             <p key={r.id}>
@@ -202,7 +202,7 @@ export default function SubmissionList() {
       <div className="overflow-x-auto">
         <table className="w-full min-w-[720px] border-collapse text-sm">
           <thead>
-            <tr className="border-b border-zinc-300 text-left dark:border-zinc-700">
+            <tr className="border-b border-[var(--md-outline-variant)] text-left">
               <th className="p-2">
                 <input
                   type="checkbox"
@@ -224,7 +224,7 @@ export default function SubmissionList() {
             {shown.map((r) => {
               const days = nowMs === 0 ? 0 : Math.floor((nowMs - Date.parse(r.createdAt)) / DAY);
               return (
-                <tr key={r.id} className="border-b border-zinc-200 dark:border-zinc-800">
+                <tr key={r.id} className="border-b border-[var(--md-outline-variant)]">
                   <td className="p-2">
                     <input type="checkbox" aria-label={`${r.id} 선택`} checked={selected.has(r.id)} onChange={() => toggle(r.id)} />
                   </td>
@@ -251,7 +251,7 @@ export default function SubmissionList() {
             })}
             {rows !== null && shown.length === 0 && (
               <tr>
-                <td colSpan={8} className="p-4 text-center text-zinc-500">
+                <td colSpan={8} className="p-4 text-center text-[var(--md-on-surface-variant)]">
                   제출된 내역이 없어요
                 </td>
               </tr>

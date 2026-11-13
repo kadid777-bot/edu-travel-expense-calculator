@@ -32,7 +32,7 @@ export default function BatchTable({ outcomes, names }: { outcomes: BatchOutcome
         <button
           type="button"
           onClick={download}
-          className="rounded border border-zinc-400 px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
+          className="rounded-full border border-[var(--md-outline-variant)] px-3 py-1.5 text-sm hover:bg-[var(--md-container-high)]"
         >
           결과 내려받기(CSV)
         </button>
@@ -40,7 +40,7 @@ export default function BatchTable({ outcomes, names }: { outcomes: BatchOutcome
       <div className="overflow-x-auto">
         <table className="w-full min-w-[640px] border-collapse text-sm">
           <thead>
-            <tr className="border-b border-zinc-300 text-left dark:border-zinc-700">
+            <tr className="border-b border-[var(--md-outline-variant)] text-left">
               <th className="p-2">번호</th>
               <th className="p-2">이름</th>
               {CATEGORIES_ORDER.map((c) => (
@@ -54,7 +54,7 @@ export default function BatchTable({ outcomes, names }: { outcomes: BatchOutcome
           </thead>
           <tbody>
             {outcomes.map((o) => (
-              <tr key={o.rowNo} className="border-b border-zinc-200 align-top dark:border-zinc-800">
+              <tr key={o.rowNo} className="border-b border-[var(--md-outline-variant)] align-top">
                 <td className="p-2">{o.rowNo}</td>
                 <td className="p-2">{names[o.rowNo]}</td>
                 {CATEGORIES_ORDER.map((c) => (

@@ -1,17 +1,11 @@
 import type { Metadata } from "next";
-import { Archivo, Inter_Tight } from "next/font/google";
+import { Google_Sans } from "next/font/google";
 import "./globals.css";
 
-// 본문·UI 글꼴(Inter Tight)과 제목·라벨용 가로폭 조절 글꼴(Archivo, wdth 축). 한글은 아래 fallback 글꼴이 맡는다.
-const interTight = Inter_Tight({
-  variable: "--font-inter-tight",
+// Material 3 Expressive의 글꼴 Google Sans(가변). 한글은 globals.css의 fallback 글꼴이 맡는다.
+const googleSans = Google_Sans({
+  variable: "--font-google-sans",
   subsets: ["latin"],
-});
-
-const archivo = Archivo({
-  variable: "--font-archivo",
-  subsets: ["latin"],
-  axes: ["wdth"],
 });
 
 export const metadata: Metadata = {
@@ -21,7 +15,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="ko" className={`${interTight.variable} ${archivo.variable} h-full antialiased`}>
+    <html lang="ko" className={`${googleSans.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );

@@ -40,9 +40,9 @@ export default function FaqList() {
       <h2 className="text-xl font-semibold tracking-tight">자주 묻는 질문</h2>
       <div className="space-y-2">
         {FAQS.map((f) => (
-          <details key={f.q} className="rounded border border-zinc-300 px-4 py-3 dark:border-zinc-700">
+          <details key={f.q} className="rounded-2xl border border-[var(--md-outline-variant)] px-4 py-3">
             <summary className="cursor-pointer text-sm font-medium">{f.q}</summary>
-            <p className="mt-2 text-sm text-zinc-700 dark:text-zinc-300">{f.a}</p>
+            <p className="mt-2 text-sm text-[var(--md-on-surface-variant)]">{f.a}</p>
           </details>
         ))}
       </div>

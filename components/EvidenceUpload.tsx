@@ -30,9 +30,9 @@ export default function EvidenceUpload() {
   }
 
   return (
-    <fieldset className="space-y-2 rounded border border-zinc-300 p-4 dark:border-zinc-700">
+    <fieldset className="space-y-2 rounded-3xl border border-[var(--md-outline-variant)] p-4">
       <legend className="px-1 text-sm font-medium">증빙 사진 확인 (선택)</legend>
-      <p className="text-xs text-zinc-600 dark:text-zinc-400">
+      <p className="text-xs text-[var(--md-on-surface-variant)]">
         영수증·승차권 사진을 올려 입력한 금액과 맞는지 눈으로 비교할 수 있어요. 사진은 이 화면에서만 보이고 서버로 보내거나 저장하지 않아요.
       </p>
       <p className="text-xs font-medium text-amber-700 dark:text-amber-400">
@@ -50,7 +50,7 @@ export default function EvidenceUpload() {
             <li key={p.url} className="w-28 text-xs">
               {/* 브라우저 안의 임시 주소라 next/image를 쓰지 않는다 */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={p.url} alt={`증빙 사진 ${p.name}`} className="h-28 w-28 rounded border border-zinc-300 object-cover dark:border-zinc-700" />
+              <img src={p.url} alt={`증빙 사진 ${p.name}`} className="h-28 w-28 rounded-xl border border-[var(--md-outline-variant)] object-cover" />
               <span className="mt-1 block truncate">{p.name}</span>
             </li>
           ))}

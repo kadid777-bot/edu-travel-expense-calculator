@@ -30,7 +30,7 @@ const TRANSPORTS: { value: TransportMode; label: string }[] = [
 ];
 
 const inputCls =
-  "w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-base dark:border-zinc-700 dark:bg-zinc-900";
+  "w-full rounded-2xl border border-[var(--md-outline-variant)] bg-[var(--md-lowest)] px-3 py-2 text-base";
 const labelCls = "mb-1 block text-sm font-medium";
 const errCls = "mt-1 text-sm text-red-700 dark:text-red-400";
 
@@ -89,7 +89,7 @@ function LegFields({
 }) {
   const sigunguList = SIGUNGU[value.sido] ?? [];
   return (
-    <fieldset className="space-y-3 rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
+    <fieldset className="space-y-3 rounded-3xl border border-[var(--md-outline-variant)] p-4">
       <legend className="px-1 font-medium">{title}</legend>
 
       <div className="grid gap-3 sm:grid-cols-2">
@@ -288,11 +288,11 @@ export default function CalculatorForm() {
         <CourseFields value={custom} onChange={setCustom} errors={errors} />
 
         {course && (
-          <dl className="grid gap-x-6 gap-y-1 rounded-lg bg-zinc-100 p-3 text-sm sm:grid-cols-2 dark:bg-zinc-800">
-            <div className="flex gap-2"><dt className="text-zinc-500">교육 장소</dt><dd>{course.venueAddress}</dd></div>
-            <div className="flex gap-2"><dt className="text-zinc-500">기간</dt><dd>{course.startDate} ~ {course.endDate} ({days}일)</dd></div>
-            <div className="flex gap-2"><dt className="text-zinc-500">숙소 제공</dt><dd>{course.lodgingProvided ? "예 (숙박비 미지급)" : "아니오"}</dd></div>
-            <div className="flex gap-2"><dt className="text-zinc-500">식사 제공</dt><dd>{course.mealsProvided ? "예 (식비 미지급)" : "아니오"}</dd></div>
+          <dl className="grid gap-x-6 gap-y-1 rounded-2xl bg-[var(--md-container-high)] p-3 text-sm sm:grid-cols-2">
+            <div className="flex gap-2"><dt className="text-[var(--md-on-surface-variant)]">교육 장소</dt><dd>{course.venueAddress}</dd></div>
+            <div className="flex gap-2"><dt className="text-[var(--md-on-surface-variant)]">기간</dt><dd>{course.startDate} ~ {course.endDate} ({days}일)</dd></div>
+            <div className="flex gap-2"><dt className="text-[var(--md-on-surface-variant)]">숙소 제공</dt><dd>{course.lodgingProvided ? "예 (숙박비 미지급)" : "아니오"}</dd></div>
+            <div className="flex gap-2"><dt className="text-[var(--md-on-surface-variant)]">식사 제공</dt><dd>{course.mealsProvided ? "예 (식비 미지급)" : "아니오"}</dd></div>
           </dl>
         )}
 
@@ -329,7 +329,7 @@ export default function CalculatorForm() {
         />
 
         {usesCar && (
-          <fieldset className="space-y-3 rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
+          <fieldset className="space-y-3 rounded-3xl border border-[var(--md-outline-variant)] p-4">
             <legend className="px-1 font-medium">휘발유 가격 기준 기간 (선택)</legend>
             <div className="grid gap-3 sm:grid-cols-2">
               <Field id="fuel-start" label="시작일" error={errors["fuelPeriod.startDate"]}>
@@ -358,7 +358,7 @@ export default function CalculatorForm() {
                 />
               </Field>
             </div>
-            <p className="text-xs text-zinc-600 dark:text-zinc-400">
+            <p className="text-xs text-[var(--md-on-surface-variant)]">
               비워 두면 오늘(조회일)의 전국 평균 휘발유 가격을 써요. 기간을 고르면 그 기간 중 오피넷이 제공하는 날짜별 전국 평균가를 평균해서 써요. 오피넷은 최근 7일과 오늘 가격만
               제공해서 그 밖의 날짜는 쓸 수 없고, 기간 안에 제공되는 날이 하나도 없으면 오늘 가격으로 계산하고 알려 드려요.
             </p>
@@ -395,10 +395,10 @@ export default function CalculatorForm() {
         </div>
 
         {course?.lodgingProvided ? (
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">이 과정은 숙소를 제공해서 숙박비를 입력하지 않아도 돼요.</p>
+          <p className="text-sm text-[var(--md-on-surface-variant)]">이 과정은 숙소를 제공해서 숙박비를 입력하지 않아도 돼요.</p>
         ) : (
           nightsCount > 0 && (
-            <fieldset className="space-y-3 rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
+            <fieldset className="space-y-3 rounded-3xl border border-[var(--md-outline-variant)] p-4">
               <legend className="px-1 font-medium">박별 숙박비 실비 (원)</legend>
               <div className="grid gap-3 sm:grid-cols-2">
                 {Array.from({ length: nightsCount }, (_, i) => (
@@ -430,14 +430,14 @@ export default function CalculatorForm() {
         )}
 
         {message && (
-          <p role="alert" className="rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-900 dark:border-red-800 dark:bg-red-950 dark:text-red-200">
+          <p role="alert" className="rounded-2xl border border-red-300 bg-red-50 p-3 text-sm text-red-900 dark:border-red-800 dark:bg-red-950 dark:text-red-200">
             {message}
           </p>
         )}
 
         {course &&
           (course.mealsProvided ? (
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">이 과정은 식사를 제공해서 식비를 청구하지 않아요.</p>
+            <p className="text-sm text-[var(--md-on-surface-variant)]">이 과정은 식사를 제공해서 식비를 청구하지 않아요.</p>
           ) : (
             <Field id="mealDays" label={`식비 청구 일수 (0 ~ ${days}일, 기본 0)`} error={errors.mealDays}>
               <input
@@ -449,7 +449,7 @@ export default function CalculatorForm() {
                 value={mealDays}
                 onChange={(e) => setMealDays(e.target.value)}
               />
-              <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+              <p className="mt-1 text-xs text-[var(--md-on-surface-variant)]">
                 식비는 교육에 포함되는 경우가 많아 기본으로 지급하지 않아요. 식사가 제공되지 않은 날이 있을 때만 그 일수를 입력하세요.
               </p>
             </Field>
@@ -460,7 +460,7 @@ export default function CalculatorForm() {
         <button
           type="submit"
           disabled={loading}
-          className="lift w-full rounded-full bg-black px-4 py-3 text-base font-medium text-white disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900"
+          className="lift w-full rounded-full bg-[var(--md-primary)] px-4 py-3 text-base font-medium text-[var(--md-on-primary)] disabled:opacity-60"
         >
           {loading ? "계산하는 중…" : "여비 계산하기"}
         </button>

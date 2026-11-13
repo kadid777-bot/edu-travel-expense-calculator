@@ -46,14 +46,14 @@ function ScreenCard({
         <button
           type="button"
           onClick={save}
-          className="lift rounded-full border border-zinc-400 px-3 py-1 text-xs hover:bg-zinc-100 dark:hover:bg-zinc-800"
+          className="lift rounded-full border border-[var(--md-outline-variant)] px-3 py-1 text-xs hover:bg-[var(--md-container-high)]"
         >
           이미지(PNG)로 저장
         </button>
       </figcaption>
       {/* 흰 바탕 카드: 어두운 화면 설정에서도 캡처했을 때 그대로 제출할 수 있다 */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={svgDataUrl(svg)} alt={title} className="w-full rounded-lg border border-zinc-300 bg-white" />
+      <img src={svgDataUrl(svg)} alt={title} className="w-full rounded-2xl border border-[var(--md-outline-variant)] bg-[var(--md-lowest)]" />
       {error && (
         <p role="alert" className="text-xs text-red-700 dark:text-red-400">
           {error}
@@ -69,7 +69,7 @@ export default function EvidenceScreens({ evidence, fetchedAt }: { evidence: Loo
   return (
     <section aria-label="증빙 화면" className="space-y-4">
       <h3 className="font-semibold">증빙 화면 (캡처·이미지 저장용)</h3>
-      <p className="text-xs text-zinc-600 dark:text-zinc-400">
+      <p className="text-xs text-[var(--md-on-surface-variant)]">
         네이버 지도와 오피넷을 다시 열어 조회하지 않아도, 아래 화면을 캡처하거나 &quot;이미지(PNG)로 저장&quot;해서 증빙으로 낼 수 있어요. 앱이 두 서비스의 API에서 조회한
         값을 같은 정보로 보여주는 화면이고, 홈페이지 화면을 그대로 복사한 것은 아니에요. 제출처가 홈페이지 화면을 꼭 요구하면 위의 바로가기 링크를 쓰세요.
       </p>

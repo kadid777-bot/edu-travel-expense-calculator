@@ -8,7 +8,7 @@ import { VENUES, VENUE_OTHER } from "../data/venues";
 import type { CustomCourseInput } from "../lib/calc/types";
 
 const inputCls =
-  "w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-base dark:border-zinc-700 dark:bg-zinc-900 disabled:bg-zinc-100 disabled:text-zinc-700 dark:disabled:bg-zinc-800";
+  "w-full rounded-2xl border border-[var(--md-outline-variant)] bg-[var(--md-lowest)] px-3 py-2 text-base disabled:bg-[var(--md-container-high)] disabled:text-[var(--md-on-surface-variant)] dark:disabled:bg-zinc-800";
 const labelCls = "mb-1 block text-sm font-medium";
 const errCls = "mt-1 text-sm text-red-700 dark:text-red-400";
 
@@ -58,7 +58,7 @@ export default function CourseFields({
   }
 
   return (
-    <fieldset className="space-y-3 rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
+    <fieldset className="space-y-3 rounded-3xl border border-[var(--md-outline-variant)] p-4">
       <legend className="px-1 font-medium">교육 장소와 기간</legend>
 
       <Field id="venue" label="교육 장소" error={errors["customCourse.venueSido"]}>
@@ -74,8 +74,8 @@ export default function CourseFields({
       </Field>
 
       {preset && (
-        <p className="rounded-lg bg-zinc-100 px-3 py-2 text-sm dark:bg-zinc-800">
-          <span className="text-zinc-500">주소 </span>
+        <p className="rounded-2xl bg-[var(--md-container-high)] px-3 py-2 text-sm">
+          <span className="text-[var(--md-on-surface-variant)]">주소 </span>
           {preset.address}
         </p>
       )}
@@ -151,7 +151,7 @@ export default function CourseFields({
           교육기관이 식사를 제공해요 (식비 미지급)
         </label>
       </div>
-      <p className="text-xs text-zinc-600 dark:text-zinc-400">
+      <p className="text-xs text-[var(--md-on-surface-variant)]">
         자주 쓰는 교육 장소 3곳은 고르면 주소가 자동으로 채워져요. 그 밖의 장소는 &quot;기타&quot;를 고르고 시·도와 시·군·구를 직접 고르세요. 교육 일수는 시작일과 종료일을 모두
         포함해서 세고 최대 60일까지 입력할 수 있어요.
       </p>

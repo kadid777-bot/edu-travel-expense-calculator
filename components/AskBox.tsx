@@ -55,12 +55,12 @@ export default function AskBox() {
           id="question"
           rows={3}
           maxLength={500}
-          className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-base dark:border-zinc-700 dark:bg-zinc-900"
+          className="w-full rounded-2xl border border-[var(--md-outline-variant)] bg-[var(--md-lowest)] px-3 py-2 text-base"
           placeholder="예: 항공을 이용하면 얼마까지 인정되나요?"
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
         />
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">이름·연락처는 입력하지 마세요. (최대 500자)</p>
+        <p className="text-sm text-[var(--md-on-surface-variant)]">이름·연락처는 입력하지 마세요. (최대 500자)</p>
 
         <div className="flex flex-wrap gap-2">
           {EXAMPLES.map((ex) => (
@@ -68,7 +68,7 @@ export default function AskBox() {
               key={ex}
               type="button"
               onClick={() => setQuestion(ex)}
-              className="rounded-full border border-zinc-300 px-3 py-1 text-sm hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+              className="rounded-full border border-[var(--md-outline-variant)] px-3 py-1 text-sm hover:bg-[var(--md-container-high)]"
             >
               {ex}
             </button>
@@ -78,26 +78,26 @@ export default function AskBox() {
         <button
           type="submit"
           disabled={loading || question.trim() === ""}
-          className="lift w-full rounded-full bg-black px-4 py-3 text-base font-medium text-white disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900"
+          className="lift w-full rounded-full bg-[var(--md-primary)] px-4 py-3 text-base font-medium text-[var(--md-on-primary)] disabled:opacity-60"
         >
           {loading ? "찾아보는 중…" : "질문하기"}
         </button>
       </form>
 
       {error && (
-        <p role="alert" className="rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-900 dark:border-red-800 dark:bg-red-950 dark:text-red-200">
+        <p role="alert" className="rounded-2xl border border-red-300 bg-red-50 p-3 text-sm text-red-900 dark:border-red-800 dark:bg-red-950 dark:text-red-200">
           {error}
         </p>
       )}
 
       {result && (
-        <div className="space-y-2 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900" aria-live="polite">
+        <div className="space-y-2 rounded-3xl border border-[var(--md-outline-variant)] bg-[var(--md-lowest)] p-4" aria-live="polite">
           <p className="whitespace-pre-wrap">{result.answer}</p>
           {result.refs.length > 0 && (
-            <p className="text-xs text-zinc-500">근거: {result.refs.map((r) => `${r.document} ${r.article}`).join(" / ")}</p>
+            <p className="text-xs text-[var(--md-on-surface-variant)]">근거: {result.refs.map((r) => `${r.document} ${r.article}`).join(" / ")}</p>
           )}
           {!result.found && !result.refused && (
-            <p className="text-xs text-zinc-500">AI는 규정에 적힌 내용만 답해요. 규정에서 근거를 찾지 못하면 이렇게 안내해요.</p>
+            <p className="text-xs text-[var(--md-on-surface-variant)]">AI는 규정에 적힌 내용만 답해요. 규정에서 근거를 찾지 못하면 이렇게 안내해요.</p>
           )}
         </div>
       )}

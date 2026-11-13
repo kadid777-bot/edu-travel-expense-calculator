@@ -45,7 +45,7 @@ export default function LoginForm() {
           id="op-password"
           type="password"
           autoComplete="current-password"
-          className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-base dark:border-zinc-700 dark:bg-zinc-900"
+          className="w-full rounded-2xl border border-[var(--md-outline-variant)] bg-[var(--md-lowest)] px-3 py-2 text-base"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
@@ -55,7 +55,7 @@ export default function LoginForm() {
           {error}
         </p>
       )}
-      <button type="submit" disabled={busy || password === ""} className="lift w-full rounded-full bg-black px-4 py-3 text-base font-medium text-white disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900">
+      <button type="submit" disabled={busy || password === ""} className="lift w-full rounded-full bg-[var(--md-primary)] px-4 py-3 text-base font-medium text-[var(--md-on-primary)] disabled:opacity-60">
         {busy ? "확인하는 중…" : "로그인"}
       </button>
     </form>

@@ -13,7 +13,7 @@ export default function OperatorPage() {
       <OperatorNav current="batch" />
       <header className="mb-8">
         <h1 className="text-2xl font-bold tracking-tight">운영자 일괄 산출</h1>
-        <p className="mt-2 text-zinc-600 dark:text-zinc-400">
+        <p className="mt-2 text-[var(--md-on-surface-variant)]">
           교육생 명단을 한 번에 계산해요. 여기에 입력한 명단은 서버에 저장되지 않아요(교육생이 제출한 내역은 &quot;제출 목록&quot;에서 봐요).
         </p>
       </header>

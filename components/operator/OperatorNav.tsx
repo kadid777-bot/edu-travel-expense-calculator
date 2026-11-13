@@ -11,8 +11,8 @@ export default function OperatorNav({ current }: { current: "batch" | "submissio
     router.push("/operator/login");
   }
   const base = "rounded-full px-4 py-2 text-sm transition-colors";
-  const on = "bg-black text-white dark:bg-zinc-100 dark:text-zinc-900";
-  const off = "hover:bg-zinc-200 dark:hover:bg-zinc-800";
+  const on = "bg-[var(--md-primary)] text-[var(--md-on-primary)]";
+  const off = "hover:bg-[var(--md-container-high)]";
   return (
     <nav aria-label="운영자 메뉴" className="mb-6 flex flex-wrap items-center gap-2">
       <Link href="/operator" className={`${base} ${current === "batch" ? on : off}`}>
